@@ -105,7 +105,7 @@ cd $dir
 git clone https://github.com/cshea3/fbcunn-patches
 cp fbcunn-patches/std_to_folly_.patch folly
 cd folly
-git apply std_to_make_.patch
+git apply std_to_folly_.patch
 cd $dir
 cd $dir/folly/folly
 autoreconf -ivf
