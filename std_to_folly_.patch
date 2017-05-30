@@ -1,0 +1,2113 @@
+From bfd9bcef049ad78f3c3299de62ca97b83f67732f Mon Sep 17 00:00:00 2001
+From: Colin Shea <colin.shea@bia-boeing.com>
+Date: Tue, 30 May 2017 16:41:37 -0400
+Subject: [PATCH] Updated folly to remove std and replace with folly for
+ make_unique
+
+---
+ folly/AtomicLinkedList.h                           |  2 +-
+ folly/Memory.h                                     |  4 +-
+ folly/Utility.h                                    |  4 +-
+ folly/experimental/EnvUtil.h                       |  2 +-
+ folly/experimental/JSONSchema.cpp                  | 50 ++++++-------
+ folly/experimental/TestUtil.cpp                    |  2 +-
+ .../flat_combining/test/FlatCombiningExamples.h    |  2 +-
+ folly/experimental/io/test/AsyncIOTest.cpp         |  2 +-
+ .../observer/detail/ObserverManager.cpp            |  4 +-
+ folly/experimental/observer/test/ObserverTest.cpp  |  4 +-
+ folly/experimental/symbolizer/Symbolizer.cpp       |  2 +-
+ folly/experimental/test/EnvUtilTest.cpp            |  6 +-
+ folly/experimental/test/FutureDAGTest.cpp          |  2 +-
+ .../test/ReadMostlySharedPtrBenchmark.cpp          |  2 +-
+ .../experimental/test/ReadMostlySharedPtrTest.cpp  | 24 +++----
+ folly/experimental/test/TestUtilTest.cpp           |  2 +-
+ folly/fibers/FiberManager.cpp                      |  2 +-
+ folly/fibers/FiberManagerInternal-inl.h            |  4 +-
+ folly/fibers/FiberManagerInternal.h                |  2 +-
+ folly/fibers/FiberManagerMap.cpp                   |  4 +-
+ folly/fibers/GuardPageAllocator.cpp                |  4 +-
+ folly/fibers/TimeoutController.cpp                 |  2 +-
+ folly/fibers/test/FibersBenchmark.cpp              |  6 +-
+ folly/fibers/test/FibersTest.cpp                   | 82 +++++++++++-----------
+ folly/fibers/test/FibersTestApp.cpp                |  2 +-
+ folly/futures/Future-inl.h                         |  2 +-
+ folly/futures/detail/Core.h                        |  2 +-
+ folly/futures/test/FilterTest.cpp                  |  2 +-
+ folly/futures/test/FutureSplitterTest.cpp          |  2 +-
+ folly/futures/test/FutureTest.cpp                  |  6 +-
+ folly/futures/test/NonCopyableLambdaTest.cpp       |  2 +-
+ folly/futures/test/PromiseTest.cpp                 |  6 +-
+ folly/futures/test/TestExecutorTest.cpp            |  2 +-
+ folly/futures/test/ViaTest.cpp                     |  4 +-
+ folly/gen/test/BaseTest.cpp                        | 10 +--
+ folly/gen/test/ParallelMapTest.cpp                 | 16 ++---
+ folly/io/Compression.cpp                           | 16 ++---
+ folly/io/Cursor.h                                  |  2 +-
+ folly/io/IOBuf.cpp                                 | 14 ++--
+ folly/io/async/AsyncSSLSocket.cpp                  | 12 ++--
+ folly/io/async/AsyncSocket.cpp                     |  6 +-
+ folly/io/async/EventBase.cpp                       |  2 +-
+ folly/io/async/EventBaseThread.cpp                 |  2 +-
+ folly/io/async/HHWheelTimer.cpp                    |  2 +-
+ folly/io/async/TimeoutManager.cpp                  |  4 +-
+ folly/io/async/test/AsyncSSLSocketTest.cpp         |  6 +-
+ folly/io/async/test/AsyncSocketTest2.cpp           |  2 +-
+ folly/io/async/test/AsyncUDPSocketTest.cpp         |  4 +-
+ folly/io/async/test/DestructorCheckTest.cpp        | 20 +++---
+ folly/io/async/test/EventBaseLocalTest.cpp         |  6 +-
+ folly/io/async/test/EventBaseTest.cpp              | 10 +--
+ folly/io/async/test/RequestContextTest.cpp         | 16 ++---
+ folly/io/async/test/SSLSessionTest.cpp             |  6 +-
+ folly/io/async/test/ScopedBoundPort.cpp            |  2 +-
+ folly/io/test/CompressionTest.cpp                  |  2 +-
+ folly/ssl/SSLSession.h                             |  4 +-
+ folly/test/AHMIntStressTest.cpp                    |  2 +-
+ folly/test/FunctionTest.cpp                        |  2 +-
+ folly/test/MPMCQueueTest.cpp                       | 44 ++++++------
+ folly/test/PartialTest.cpp                         |  4 +-
+ folly/test/SingletonTest.cpp                       |  2 +-
+ folly/test/ThreadLocalTest.cpp                     |  2 +-
+ folly/test/TryTest.cpp                             |  2 +-
+ folly/test/sorted_vector_test.cpp                  |  4 +-
+ 64 files changed, 238 insertions(+), 238 deletions(-)
+
+diff --git a/folly/AtomicLinkedList.h b/folly/AtomicLinkedList.h
+index 4d1d850..3ee27bb 100644
+--- a/folly/AtomicLinkedList.h
++++ b/folly/AtomicLinkedList.h
+@@ -54,7 +54,7 @@ class AtomicLinkedList {
+    *         after the call.
+    */
+   bool insertHead(T t) {
+-    auto wrapper = std::make_unique<Wrapper>(std::move(t));
++    auto wrapper = folly::make_unique<Wrapper>(std::move(t));
+ 
+     return list_.insertHead(wrapper.release());
+   }
+diff --git a/folly/Memory.h b/folly/Memory.h
+index 272d64d..977923e 100644
+--- a/folly/Memory.h
++++ b/folly/Memory.h
+@@ -30,7 +30,7 @@ namespace folly {
+ 
+ /**
+  * For exception safety and consistency with make_shared. Erase me when
+- * we have std::make_unique().
++ * we have folly::make_unique().
+  *
+  * @author Louis Brandy (ldbrandy@fb.com)
+  * @author Xu Ning (xning@fb.com)
+@@ -39,7 +39,7 @@ namespace folly {
+ #if __cplusplus >= 201402L || __cpp_lib_make_unique >= 201304L || \
+     (__ANDROID__ && __cplusplus >= 201300L) || _MSC_VER >= 1900
+ 
+-/* using override */ using std::make_unique;
++/* using override */ using folly::make_unique;
+ 
+ #else
+ 
+diff --git a/folly/Utility.h b/folly/Utility.h
+index 4d6725d..20413c8 100644
+--- a/folly/Utility.h
++++ b/folly/Utility.h
+@@ -144,10 +144,10 @@ using make_index_sequence = detail::make_index_sequence<N>;
+  * Warning: passing a prvalue through Identity turns it into an xvalue,
+  * which can effect whether lifetime extension occurs or not. For instance:
+  *
+- *   auto&& x = std::make_unique<int>(42);
++ *   auto&& x = folly::make_unique<int>(42);
+  *   cout << *x ; // OK, x refers to a valid unique_ptr.
+  *
+- *   auto&& y = Identity()(std::make_unique<int>(42));
++ *   auto&& y = Identity()(folly::make_unique<int>(42));
+  *   cout << *y ; // ERROR: y did not lifetime-extend the unique_ptr. It
+  *                // is no longer valid
+  */
+diff --git a/folly/experimental/EnvUtil.h b/folly/experimental/EnvUtil.h
+index 2d22f29..4048480 100644
+--- a/folly/experimental/EnvUtil.h
++++ b/folly/experimental/EnvUtil.h
+@@ -98,7 +98,7 @@ namespace test {
+ // of its destruction.
+ struct EnvVarSaver {
+   EnvVarSaver()
+-      : state_(std::make_unique<experimental::EnvironmentState>(
++      : state_(folly::make_unique<experimental::EnvironmentState>(
+             experimental::EnvironmentState::fromCurrentEnvironment())) {}
+ 
+   EnvVarSaver(EnvVarSaver&& other) noexcept : state_(std::move(other.state_)) {}
+diff --git a/folly/experimental/JSONSchema.cpp b/folly/experimental/JSONSchema.cpp
+index 863f410..e6fd4c2 100644
+--- a/folly/experimental/JSONSchema.cpp
++++ b/folly/experimental/JSONSchema.cpp
+@@ -117,7 +117,7 @@ struct SchemaValidator final : IValidator, public Validator {
+     // We break apart the constructor and actually loading the schema so that
+     // we can handle the case where a schema refers to itself, e.g. via
+     // "$ref": "#".
+-    auto v = std::make_unique<SchemaValidator>();
++    auto v = folly::make_unique<SchemaValidator>();
+     v->loadSchema(context, schema);
+     return v;
+   }
+@@ -667,7 +667,7 @@ void SchemaValidator::loadSchema(SchemaValidatorContext& context,
+     if (p->isString() && p->stringPiece()[0] == '#') {
+       auto it = context.refs.find(p->getString());
+       if (it != context.refs.end()) {
+-        validators_.emplace_back(std::make_unique<RefValidator>(it->second));
++        validators_.emplace_back(folly::make_unique<RefValidator>(it->second));
+         return;
+       }
+ 
+@@ -704,7 +704,7 @@ void SchemaValidator::loadSchema(SchemaValidatorContext& context,
+       // future references to it will just see that pointer and won't try to
+       // keep parsing further.
+       if (s) {
+-        auto v = std::make_unique<SchemaValidator>();
++        auto v = folly::make_unique<SchemaValidator>();
+         context.refs[p->getString()] = v.get();
+         v->loadSchema(context, *s);
+         validators_.emplace_back(std::move(v));
+@@ -715,16 +715,16 @@ void SchemaValidator::loadSchema(SchemaValidatorContext& context,
+ 
+   // Numeric validators
+   if (const auto* p = schema.get_ptr("multipleOf")) {
+-    validators_.emplace_back(std::make_unique<MultipleOfValidator>(*p));
++    validators_.emplace_back(folly::make_unique<MultipleOfValidator>(*p));
+   }
+   if (const auto* p = schema.get_ptr("maximum")) {
+-    validators_.emplace_back(std::make_unique<ComparisonValidator>(
++    validators_.emplace_back(folly::make_unique<ComparisonValidator>(
+         *p,
+         schema.get_ptr("exclusiveMaximum"),
+         ComparisonValidator::Type::MAX));
+   }
+   if (const auto* p = schema.get_ptr("minimum")) {
+-    validators_.emplace_back(std::make_unique<ComparisonValidator>(
++    validators_.emplace_back(folly::make_unique<ComparisonValidator>(
+         *p,
+         schema.get_ptr("exclusiveMinimum"),
+         ComparisonValidator::Type::MIN));
+@@ -733,16 +733,16 @@ void SchemaValidator::loadSchema(SchemaValidatorContext& context,
+   // String validators
+   if (const auto* p = schema.get_ptr("maxLength")) {
+     validators_.emplace_back(
+-        std::make_unique<SizeValidator<std::greater_equal<int64_t>>>(
++        folly::make_unique<SizeValidator<std::greater_equal<int64_t>>>(
+             *p, dynamic::Type::STRING));
+   }
+   if (const auto* p = schema.get_ptr("minLength")) {
+     validators_.emplace_back(
+-        std::make_unique<SizeValidator<std::less_equal<int64_t>>>(
++        folly::make_unique<SizeValidator<std::less_equal<int64_t>>>(
+             *p, dynamic::Type::STRING));
+   }
+   if (const auto* p = schema.get_ptr("pattern")) {
+-    validators_.emplace_back(std::make_unique<StringPatternValidator>(*p));
++    validators_.emplace_back(folly::make_unique<StringPatternValidator>(*p));
+   }
+ 
+   // Array validators
+@@ -750,20 +750,20 @@ void SchemaValidator::loadSchema(SchemaValidatorContext& context,
+   const auto* additionalItems = schema.get_ptr("additionalItems");
+   if (items || additionalItems) {
+     validators_.emplace_back(
+-        std::make_unique<ArrayItemsValidator>(context, items, additionalItems));
++        folly::make_unique<ArrayItemsValidator>(context, items, additionalItems));
+   }
+   if (const auto* p = schema.get_ptr("maxItems")) {
+     validators_.emplace_back(
+-        std::make_unique<SizeValidator<std::greater_equal<int64_t>>>(
++        folly::make_unique<SizeValidator<std::greater_equal<int64_t>>>(
+             *p, dynamic::Type::ARRAY));
+   }
+   if (const auto* p = schema.get_ptr("minItems")) {
+     validators_.emplace_back(
+-        std::make_unique<SizeValidator<std::less_equal<int64_t>>>(
++        folly::make_unique<SizeValidator<std::less_equal<int64_t>>>(
+             *p, dynamic::Type::ARRAY));
+   }
+   if (const auto* p = schema.get_ptr("uniqueItems")) {
+-    validators_.emplace_back(std::make_unique<ArrayUniqueValidator>(*p));
++    validators_.emplace_back(folly::make_unique<ArrayUniqueValidator>(*p));
+   }
+ 
+   // Object validators
+@@ -771,47 +771,47 @@ void SchemaValidator::loadSchema(SchemaValidatorContext& context,
+   const auto* patternProperties = schema.get_ptr("patternProperties");
+   const auto* additionalProperties = schema.get_ptr("additionalProperties");
+   if (properties || patternProperties || additionalProperties) {
+-    validators_.emplace_back(std::make_unique<PropertiesValidator>(
++    validators_.emplace_back(folly::make_unique<PropertiesValidator>(
+         context, properties, patternProperties, additionalProperties));
+   }
+   if (const auto* p = schema.get_ptr("maxProperties")) {
+     validators_.emplace_back(
+-        std::make_unique<SizeValidator<std::greater_equal<int64_t>>>(
++        folly::make_unique<SizeValidator<std::greater_equal<int64_t>>>(
+             *p, dynamic::Type::OBJECT));
+   }
+   if (const auto* p = schema.get_ptr("minProperties")) {
+     validators_.emplace_back(
+-        std::make_unique<SizeValidator<std::less_equal<int64_t>>>(
++        folly::make_unique<SizeValidator<std::less_equal<int64_t>>>(
+             *p, dynamic::Type::OBJECT));
+   }
+   if (const auto* p = schema.get_ptr("required")) {
+-    validators_.emplace_back(std::make_unique<RequiredValidator>(*p));
++    validators_.emplace_back(folly::make_unique<RequiredValidator>(*p));
+   }
+ 
+   // Misc validators
+   if (const auto* p = schema.get_ptr("dependencies")) {
+     validators_.emplace_back(
+-        std::make_unique<DependencyValidator>(context, *p));
++        folly::make_unique<DependencyValidator>(context, *p));
+   }
+   if (const auto* p = schema.get_ptr("enum")) {
+-    validators_.emplace_back(std::make_unique<EnumValidator>(*p));
++    validators_.emplace_back(folly::make_unique<EnumValidator>(*p));
+   }
+   if (const auto* p = schema.get_ptr("type")) {
+-    validators_.emplace_back(std::make_unique<TypeValidator>(*p));
++    validators_.emplace_back(folly::make_unique<TypeValidator>(*p));
+   }
+   if (const auto* p = schema.get_ptr("allOf")) {
+-    validators_.emplace_back(std::make_unique<AllOfValidator>(context, *p));
++    validators_.emplace_back(folly::make_unique<AllOfValidator>(context, *p));
+   }
+   if (const auto* p = schema.get_ptr("anyOf")) {
+-    validators_.emplace_back(std::make_unique<AnyOfValidator>(
++    validators_.emplace_back(folly::make_unique<AnyOfValidator>(
+         context, *p, AnyOfValidator::Type::ONE_OR_MORE));
+   }
+   if (const auto* p = schema.get_ptr("oneOf")) {
+-    validators_.emplace_back(std::make_unique<AnyOfValidator>(
++    validators_.emplace_back(folly::make_unique<AnyOfValidator>(
+         context, *p, AnyOfValidator::Type::EXACTLY_ONE));
+   }
+   if (const auto* p = schema.get_ptr("not")) {
+-    validators_.emplace_back(std::make_unique<NotValidator>(context, *p));
++    validators_.emplace_back(folly::make_unique<NotValidator>(context, *p));
+   }
+ }
+ 
+@@ -1015,7 +1015,7 @@ folly::Singleton<Validator> schemaValidator([]() {
+ Validator::~Validator() = default;
+ 
+ std::unique_ptr<Validator> makeValidator(const dynamic& schema) {
+-  auto v = std::make_unique<SchemaValidator>();
++  auto v = folly::make_unique<SchemaValidator>();
+   SchemaValidatorContext context(schema);
+   context.refs["#"] = v.get();
+   v->loadSchema(context, schema);
+diff --git a/folly/experimental/TestUtil.cpp b/folly/experimental/TestUtil.cpp
+index 91410a5..afbf25a 100644
+--- a/folly/experimental/TestUtil.cpp
++++ b/folly/experimental/TestUtil.cpp
+@@ -102,7 +102,7 @@ TemporaryDirectory::TemporaryDirectory(
+     fs::path dir,
+     Scope scope)
+     : scope_(scope),
+-      path_(std::make_unique<fs::path>(
++      path_(folly::make_unique<fs::path>(
+           generateUniquePath(std::move(dir), namePrefix))) {
+   fs::create_directory(path());
+ }
+diff --git a/folly/experimental/flat_combining/test/FlatCombiningExamples.h b/folly/experimental/flat_combining/test/FlatCombiningExamples.h
+index 17c25ca..cbb6a1f 100644
+--- a/folly/experimental/flat_combining/test/FlatCombiningExamples.h
++++ b/folly/experimental/flat_combining/test/FlatCombiningExamples.h
+@@ -33,7 +33,7 @@ struct Line {
+ class Data { // Sequential data structure
+  public:
+   explicit Data(size_t size) : size_(size) {
+-    x_ = std::make_unique<Line[]>(size_);
++    x_ = folly::make_unique<Line[]>(size_);
+   }
+ 
+   uint64_t getVal() {
+diff --git a/folly/experimental/io/test/AsyncIOTest.cpp b/folly/experimental/io/test/AsyncIOTest.cpp
+index d7b3273..94bcf64 100644
+--- a/folly/experimental/io/test/AsyncIOTest.cpp
++++ b/folly/experimental/io/test/AsyncIOTest.cpp
+@@ -412,7 +412,7 @@ TEST(AsyncIO, Cancel) {
+       const size_t size = 2 * kAlign;
+       bufs.push_back(allocateAligned(size));
+ 
+-      ops.push_back(std::make_unique<AsyncIO::Op>());
++      ops.push_back(folly::make_unique<AsyncIO::Op>());
+       auto& op = *ops.back();
+ 
+       op.setNotificationCallback([&](AsyncIOOp*) { ++completed; });
+diff --git a/folly/experimental/observer/detail/ObserverManager.cpp b/folly/experimental/observer/detail/ObserverManager.cpp
+index 88372ad..e28fc3b 100644
+--- a/folly/experimental/observer/detail/ObserverManager.cpp
++++ b/folly/experimental/observer/detail/ObserverManager.cpp
+@@ -166,8 +166,8 @@ class ObserverManager::NextQueue {
+ };
+ 
+ ObserverManager::ObserverManager() {
+-  currentQueue_ = std::make_unique<CurrentQueue>();
+-  nextQueue_ = std::make_unique<NextQueue>(*this);
++  currentQueue_ = folly::make_unique<CurrentQueue>();
++  nextQueue_ = folly::make_unique<NextQueue>(*this);
+ }
+ 
+ ObserverManager::~ObserverManager() {
+diff --git a/folly/experimental/observer/test/ObserverTest.cpp b/folly/experimental/observer/test/ObserverTest.cpp
+index ed372f5..2a88dbf 100644
+--- a/folly/experimental/observer/test/ObserverTest.cpp
++++ b/folly/experimental/observer/test/ObserverTest.cpp
+@@ -257,9 +257,9 @@ TEST(Observer, TLObserver) {
+   };
+ 
+   auto k =
+-      std::make_unique<folly::observer::TLObserver<int>>(createTLObserver(42));
++      folly::make_unique<folly::observer::TLObserver<int>>(createTLObserver(42));
+   EXPECT_EQ(42, ***k);
+-  k = std::make_unique<folly::observer::TLObserver<int>>(createTLObserver(41));
++  k = folly::make_unique<folly::observer::TLObserver<int>>(createTLObserver(41));
+   EXPECT_EQ(41, ***k);
+ }
+ 
+diff --git a/folly/experimental/symbolizer/Symbolizer.cpp b/folly/experimental/symbolizer/Symbolizer.cpp
+index 25d367c..d7c2739 100644
+--- a/folly/experimental/symbolizer/Symbolizer.cpp
++++ b/folly/experimental/symbolizer/Symbolizer.cpp
+@@ -385,7 +385,7 @@ StackTracePrinter::StackTracePrinter(size_t minSignalSafeElfCacheSize, int fd)
+           fd,
+           SymbolizePrinter::COLOR_IF_TTY,
+           size_t(64) << 10), // 64KiB
+-      addresses_(std::make_unique<FrameArray<kMaxStackTraceDepth>>()) {}
++      addresses_(folly::make_unique<FrameArray<kMaxStackTraceDepth>>()) {}
+ 
+ void StackTracePrinter::flush() {
+   printer_.flush();
+diff --git a/folly/experimental/test/EnvUtilTest.cpp b/folly/experimental/test/EnvUtilTest.cpp
+index d622e19..6c0e454 100644
+--- a/folly/experimental/test/EnvUtilTest.cpp
++++ b/folly/experimental/test/EnvUtilTest.cpp
+@@ -45,7 +45,7 @@ TEST(EnvVarSaverTest, ExampleNew) {
+   PCHECK(0 == unsetenv(key));
+   EXPECT_EQ(nullptr, getenv(key));
+ 
+-  auto saver = std::make_unique<EnvVarSaver>();
++  auto saver = folly::make_unique<EnvVarSaver>();
+   PCHECK(0 == setenv(key, "blah", true));
+   EXPECT_STREQ("blah", getenv(key));
+   saver = nullptr;
+@@ -57,7 +57,7 @@ TEST(EnvVarSaverTest, ExampleExisting) {
+   EXPECT_NE(nullptr, getenv(key));
+   auto value = std::string{getenv(key)};
+ 
+-  auto saver = std::make_unique<EnvVarSaver>();
++  auto saver = folly::make_unique<EnvVarSaver>();
+   PCHECK(0 == setenv(key, "blah", true));
+   EXPECT_STREQ("blah", getenv(key));
+   saver = nullptr;
+@@ -180,7 +180,7 @@ TEST(EnvVarSaverTest, ExampleDeleting) {
+   EXPECT_NE(nullptr, getenv(key));
+   auto value = std::string{getenv(key)};
+ 
+-  auto saver = std::make_unique<EnvVarSaver>();
++  auto saver = folly::make_unique<EnvVarSaver>();
+   PCHECK(0 == unsetenv(key));
+   EXPECT_EQ(nullptr, getenv(key));
+   saver = nullptr;
+diff --git a/folly/experimental/test/FutureDAGTest.cpp b/folly/experimental/test/FutureDAGTest.cpp
+index 98329c9..1e4cf88 100644
+--- a/folly/experimental/test/FutureDAGTest.cpp
++++ b/folly/experimental/test/FutureDAGTest.cpp
+@@ -23,7 +23,7 @@ struct FutureDAGTest : public testing::Test {
+   typedef FutureDAG::Handle Handle;
+ 
+   Handle add() {
+-    auto node = std::make_unique<TestNode>(this);
++    auto node = folly::make_unique<TestNode>(this);
+     auto handle = node->handle;
+     nodes.emplace(handle, std::move(node));
+     return handle;
+diff --git a/folly/experimental/test/ReadMostlySharedPtrBenchmark.cpp b/folly/experimental/test/ReadMostlySharedPtrBenchmark.cpp
+index a2e2dcc..6270653 100644
+--- a/folly/experimental/test/ReadMostlySharedPtrBenchmark.cpp
++++ b/folly/experimental/test/ReadMostlySharedPtrBenchmark.cpp
+@@ -29,7 +29,7 @@ template <template<typename> class MainPtr,
+           template<typename> class WeakPtr,
+           size_t threadCount>
+ void benchmark(size_t n) {
+-  MainPtr<int> mainPtr(std::make_unique<int>(42));
++  MainPtr<int> mainPtr(folly::make_unique<int>(42));
+ 
+   std::vector<std::thread> ts;
+ 
+diff --git a/folly/experimental/test/ReadMostlySharedPtrTest.cpp b/folly/experimental/test/ReadMostlySharedPtrTest.cpp
+index ba85eb0..62930f8 100644
+--- a/folly/experimental/test/ReadMostlySharedPtrTest.cpp
++++ b/folly/experimental/test/ReadMostlySharedPtrTest.cpp
+@@ -84,12 +84,12 @@ TEST_F(ReadMostlySharedPtrTest, BasicStores) {
+ 
+   // Store 1.
+   std::atomic<int> cnt1{0};
+-  ptr.reset(std::make_unique<TestObject>(1, cnt1));
++  ptr.reset(folly::make_unique<TestObject>(1, cnt1));
+   EXPECT_EQ(1, cnt1.load());
+ 
+   // Store 2, check that 1 is destroyed.
+   std::atomic<int> cnt2{0};
+-  ptr.reset(std::make_unique<TestObject>(2, cnt2));
++  ptr.reset(folly::make_unique<TestObject>(2, cnt2));
+   EXPECT_EQ(1, cnt2.load());
+   EXPECT_EQ(0, cnt1.load());
+ 
+@@ -109,13 +109,13 @@ TEST_F(ReadMostlySharedPtrTest, BasicLoads) {
+     EXPECT_EQ(ptr.get(), nullptr);
+ 
+     std::atomic<int> cnt1{0};
+-    ptr.reset(std::make_unique<TestObject>(1, cnt1));
++    ptr.reset(folly::make_unique<TestObject>(1, cnt1));
+     EXPECT_EQ(1, cnt1.load());
+ 
+     x = ptr;
+     EXPECT_EQ(1, x->value);
+ 
+-    ptr.reset(std::make_unique<TestObject>(2, cnt2));
++    ptr.reset(folly::make_unique<TestObject>(2, cnt2));
+     EXPECT_EQ(1, cnt2.load());
+     EXPECT_EQ(1, cnt1.load());
+ 
+@@ -174,18 +174,18 @@ TEST_F(ReadMostlySharedPtrTest, LoadsFromThreads) {
+ 
+     loads[0].requestAndWait();
+ 
+-    ptr.reset(std::make_unique<TestObject>(1, cnt));
++    ptr.reset(folly::make_unique<TestObject>(1, cnt));
+     loads[1].requestAndWait();
+ 
+-    ptr.reset(std::make_unique<TestObject>(2, cnt));
++    ptr.reset(folly::make_unique<TestObject>(2, cnt));
+     loads[2].requestAndWait();
+     loads[3].requestAndWait();
+ 
+-    ptr.reset(std::make_unique<TestObject>(3, cnt));
+-    ptr.reset(std::make_unique<TestObject>(4, cnt));
++    ptr.reset(folly::make_unique<TestObject>(3, cnt));
++    ptr.reset(folly::make_unique<TestObject>(4, cnt));
+     loads[4].requestAndWait();
+ 
+-    ptr.reset(std::make_unique<TestObject>(5, cnt));
++    ptr.reset(folly::make_unique<TestObject>(5, cnt));
+     loads[5].requestAndWait();
+     loads[6].requestAndWait();
+ 
+@@ -201,7 +201,7 @@ TEST_F(ReadMostlySharedPtrTest, LoadsFromThreads) {
+ TEST_F(ReadMostlySharedPtrTest, Ctor) {
+   std::atomic<int> cnt1{0};
+   {
+-    ReadMostlyMainPtr<TestObject> ptr(std::make_unique<TestObject>(1, cnt1));
++    ReadMostlyMainPtr<TestObject> ptr(folly::make_unique<TestObject>(1, cnt1));
+ 
+     EXPECT_EQ(1, ptr.getShared()->value);
+   }
+@@ -216,7 +216,7 @@ TEST_F(ReadMostlySharedPtrTest, ClearingCache) {
+   ReadMostlyMainPtr<TestObject> ptr;
+ 
+   // Store 1.
+-  ptr.reset(std::make_unique<TestObject>(1, cnt1));
++  ptr.reset(folly::make_unique<TestObject>(1, cnt1));
+ 
+   Coordinator c;
+ 
+@@ -231,7 +231,7 @@ TEST_F(ReadMostlySharedPtrTest, ClearingCache) {
+   EXPECT_EQ(1, cnt1.load());
+ 
+   // Store 2 and check that 1 is destroyed.
+-  ptr.reset(std::make_unique<TestObject>(2, cnt2));
++  ptr.reset(folly::make_unique<TestObject>(2, cnt2));
+   EXPECT_EQ(0, cnt1.load());
+ 
+   // Unblock thread.
+diff --git a/folly/experimental/test/TestUtilTest.cpp b/folly/experimental/test/TestUtilTest.cpp
+index 32196ec..cbae581 100644
+--- a/folly/experimental/test/TestUtilTest.cpp
++++ b/folly/experimental/test/TestUtilTest.cpp
+@@ -118,7 +118,7 @@ TEST(TemporaryDirectory, SafelyMove) {
+     expectTempdirExists(d);
+     expectTempdirExists(d2);
+ 
+-    dir = std::make_unique<TemporaryDirectory>(std::move(d));
++    dir = folly::make_unique<TemporaryDirectory>(std::move(d));
+     dir2 = std::move(d2);
+   }
+ 
+diff --git a/folly/fibers/FiberManager.cpp b/folly/fibers/FiberManager.cpp
+index 054ed17..8a04bde 100644
+--- a/folly/fibers/FiberManager.cpp
++++ b/folly/fibers/FiberManager.cpp
+@@ -335,7 +335,7 @@ class ScopedAlternateSignalStack {
+       return;
+     }
+ 
+-    stack_ = std::make_unique<AltStackBuffer>();
++    stack_ = folly::make_unique<AltStackBuffer>();
+ 
+     setAlternateStack(stack_->data(), stack_->size());
+   }
+diff --git a/folly/fibers/FiberManagerInternal-inl.h b/folly/fibers/FiberManagerInternal-inl.h
+index 862e6a3..df354aa 100644
+--- a/folly/fibers/FiberManagerInternal-inl.h
++++ b/folly/fibers/FiberManagerInternal-inl.h
+@@ -313,10 +313,10 @@ void FiberManager::addTaskRemote(F&& func) {
+     auto currentFm = getFiberManagerUnsafe();
+     if (currentFm && currentFm->currentFiber_ &&
+         currentFm->localType_ == localType_) {
+-      return std::make_unique<RemoteTask>(
++      return folly::make_unique<RemoteTask>(
+           std::forward<F>(func), currentFm->currentFiber_->localData_);
+     }
+-    return std::make_unique<RemoteTask>(std::forward<F>(func));
++    return folly::make_unique<RemoteTask>(std::forward<F>(func));
+   }();
+   auto insertHead = [&]() {
+     return remoteTaskQueue_.insertHead(task.release());
+diff --git a/folly/fibers/FiberManagerInternal.h b/folly/fibers/FiberManagerInternal.h
+index f944789..fae933a 100644
+--- a/folly/fibers/FiberManagerInternal.h
++++ b/folly/fibers/FiberManagerInternal.h
+@@ -337,7 +337,7 @@ class FiberManager : public ::folly::Executor {
+     template <typename F>
+     RemoteTask(F&& f, const Fiber::LocalData& localData_)
+         : func(std::forward<F>(f)),
+-          localData(std::make_unique<Fiber::LocalData>(localData_)),
++          localData(folly::make_unique<Fiber::LocalData>(localData_)),
+           rcontext(RequestContext::saveContext()) {}
+     folly::Function<void()> func;
+     std::unique_ptr<Fiber::LocalData> localData;
+diff --git a/folly/fibers/FiberManagerMap.cpp b/folly/fibers/FiberManagerMap.cpp
+index a4d75bf..b81f985 100644
+--- a/folly/fibers/FiberManagerMap.cpp
++++ b/folly/fibers/FiberManagerMap.cpp
+@@ -63,12 +63,12 @@ class GlobalCache {
+     auto& fmPtrRef = map_[&evb];
+ 
+     if (!fmPtrRef) {
+-      auto loopController = std::make_unique<EventBaseLoopController>();
++      auto loopController = folly::make_unique<EventBaseLoopController>();
+       loopController->attachEventBase(evb);
+       evb.runOnDestruction(new EventBaseOnDestructionCallback<EventBaseT>(evb));
+ 
+       fmPtrRef =
+-          std::make_unique<FiberManager>(std::move(loopController), opts);
++          folly::make_unique<FiberManager>(std::move(loopController), opts);
+     }
+ 
+     return *fmPtrRef;
+diff --git a/folly/fibers/GuardPageAllocator.cpp b/folly/fibers/GuardPageAllocator.cpp
+index 2319499..fe521a4 100644
+--- a/folly/fibers/GuardPageAllocator.cpp
++++ b/folly/fibers/GuardPageAllocator.cpp
+@@ -245,7 +245,7 @@ class CacheManager {
+     std::lock_guard<folly::SpinLock> lg(lock_);
+     if (inUse_ < kMaxInUse) {
+       ++inUse_;
+-      return std::make_unique<StackCacheEntry>(stackSize);
++      return folly::make_unique<StackCacheEntry>(stackSize);
+     }
+ 
+     return nullptr;
+@@ -277,7 +277,7 @@ class CacheManager {
+ class StackCacheEntry {
+  public:
+   explicit StackCacheEntry(size_t stackSize)
+-      : stackCache_(std::make_unique<StackCache>(stackSize)) {}
++      : stackCache_(folly::make_unique<StackCache>(stackSize)) {}
+ 
+   StackCache& cache() const noexcept {
+     return *stackCache_;
+diff --git a/folly/fibers/TimeoutController.cpp b/folly/fibers/TimeoutController.cpp
+index f1bf711..ce68e9e 100644
+--- a/folly/fibers/TimeoutController.cpp
++++ b/folly/fibers/TimeoutController.cpp
+@@ -33,7 +33,7 @@ intptr_t TimeoutController::registerTimeout(
+     }
+ 
+     timeoutHandleBuckets_.emplace_back(
+-        duration, std::make_unique<TimeoutHandleList>());
++        duration, folly::make_unique<TimeoutHandleList>());
+     return *timeoutHandleBuckets_.back().second;
+   }();
+ 
+diff --git a/folly/fibers/test/FibersBenchmark.cpp b/folly/fibers/test/FibersBenchmark.cpp
+index 40d6cb3..9390585 100644
+--- a/folly/fibers/test/FibersBenchmark.cpp
++++ b/folly/fibers/test/FibersBenchmark.cpp
+@@ -31,7 +31,7 @@ static size_t sNumAwaits;
+ void runBenchmark(size_t numAwaits, size_t toSend) {
+   sNumAwaits = numAwaits;
+ 
+-  FiberManager fiberManager(std::make_unique<SimpleLoopController>());
++  FiberManager fiberManager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(fiberManager.loopController());
+ 
+@@ -87,7 +87,7 @@ BENCHMARK(FiberManagerAllocateDeallocatePattern, iters) {
+   FiberManager::Options opts;
+   opts.maxFibersPoolSize = 0;
+ 
+-  FiberManager fiberManager(std::make_unique<SimpleLoopController>(), opts);
++  FiberManager fiberManager(folly::make_unique<SimpleLoopController>(), opts);
+ 
+   for (size_t iter = 0; iter < iters; ++iter) {
+     DCHECK_EQ(0, fiberManager.fibersPoolSize());
+@@ -110,7 +110,7 @@ BENCHMARK(FiberManagerAllocateLargeChunk, iters) {
+   FiberManager::Options opts;
+   opts.maxFibersPoolSize = 0;
+ 
+-  FiberManager fiberManager(std::make_unique<SimpleLoopController>(), opts);
++  FiberManager fiberManager(folly::make_unique<SimpleLoopController>(), opts);
+ 
+   for (size_t iter = 0; iter < iters; ++iter) {
+     DCHECK_EQ(0, fiberManager.fibersPoolSize());
+diff --git a/folly/fibers/test/FibersTest.cpp b/folly/fibers/test/FibersTest.cpp
+index 733ba7c..9178e81 100644
+--- a/folly/fibers/test/FibersTest.cpp
++++ b/folly/fibers/test/FibersTest.cpp
+@@ -44,7 +44,7 @@ TEST(FiberManager, batonTimedWaitTimeout) {
+   bool taskAdded = false;
+   size_t iterations = 0;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -85,7 +85,7 @@ TEST(FiberManager, batonTimedWaitPost) {
+   size_t iterations = 0;
+   Baton* baton_ptr;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -120,7 +120,7 @@ TEST(FiberManager, batonTimedWaitTimeoutEvb) {
+ 
+   folly::EventBase evb;
+ 
+-  FiberManager manager(std::make_unique<EventBaseLoopController>());
++  FiberManager manager(folly::make_unique<EventBaseLoopController>());
+   dynamic_cast<EventBaseLoopController&>(manager.loopController())
+       .attachEventBase(evb);
+ 
+@@ -159,7 +159,7 @@ TEST(FiberManager, batonTimedWaitPostEvb) {
+ 
+   folly::EventBase evb;
+ 
+-  FiberManager manager(std::make_unique<EventBaseLoopController>());
++  FiberManager manager(folly::make_unique<EventBaseLoopController>());
+   dynamic_cast<EventBaseLoopController&>(manager.loopController())
+       .attachEventBase(evb);
+ 
+@@ -192,7 +192,7 @@ TEST(FiberManager, batonTimedWaitPostEvb) {
+ }
+ 
+ TEST(FiberManager, batonTryWait) {
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+ 
+   // Check if try_wait and post work as expected
+   Baton b;
+@@ -225,7 +225,7 @@ TEST(FiberManager, batonTryWait) {
+ }
+ 
+ TEST(FiberManager, genericBatonFiberWait) {
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+ 
+   GenericBaton b;
+   bool fiberRunning = false;
+@@ -254,7 +254,7 @@ TEST(FiberManager, genericBatonFiberWait) {
+ }
+ 
+ TEST(FiberManager, genericBatonThreadWait) {
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   GenericBaton b;
+   std::atomic<bool> threadWaiting(false);
+ 
+@@ -284,7 +284,7 @@ TEST(FiberManager, addTasksNoncopyable) {
+   std::vector<Promise<int>> pendingFibers;
+   bool taskAdded = false;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -297,7 +297,7 @@ TEST(FiberManager, addTasksNoncopyable) {
+             await([&pendingFibers](Promise<int> promise) {
+               pendingFibers.push_back(std::move(promise));
+             });
+-            return std::make_unique<int>(i * 2 + 1);
++            return folly::make_unique<int>(i * 2 + 1);
+           });
+         }
+ 
+@@ -353,7 +353,7 @@ TEST(FiberManager, addTasksThrow) {
+   std::vector<Promise<int>> pendingFibers;
+   bool taskAdded = false;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -405,7 +405,7 @@ TEST(FiberManager, addTasksVoid) {
+   std::vector<Promise<int>> pendingFibers;
+   bool taskAdded = false;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -447,7 +447,7 @@ TEST(FiberManager, addTasksVoidThrow) {
+   std::vector<Promise<int>> pendingFibers;
+   bool taskAdded = false;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -497,7 +497,7 @@ TEST(FiberManager, addTasksReserve) {
+   std::vector<Promise<int>> pendingFibers;
+   bool taskAdded = false;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -587,7 +587,7 @@ TEST(FiberManager, forEach) {
+   std::vector<Promise<int>> pendingFibers;
+   bool taskAdded = false;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -630,7 +630,7 @@ TEST(FiberManager, collectN) {
+   std::vector<Promise<int>> pendingFibers;
+   bool taskAdded = false;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -670,7 +670,7 @@ TEST(FiberManager, collectNThrow) {
+   std::vector<Promise<int>> pendingFibers;
+   bool taskAdded = false;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -709,7 +709,7 @@ TEST(FiberManager, collectNVoid) {
+   std::vector<Promise<int>> pendingFibers;
+   bool taskAdded = false;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -745,7 +745,7 @@ TEST(FiberManager, collectNVoidThrow) {
+   std::vector<Promise<int>> pendingFibers;
+   bool taskAdded = false;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -784,7 +784,7 @@ TEST(FiberManager, collectAll) {
+   std::vector<Promise<int>> pendingFibers;
+   bool taskAdded = false;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -823,7 +823,7 @@ TEST(FiberManager, collectAllVoid) {
+   std::vector<Promise<int>> pendingFibers;
+   bool taskAdded = false;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -858,7 +858,7 @@ TEST(FiberManager, collectAny) {
+   std::vector<Promise<int>> pendingFibers;
+   bool taskAdded = false;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -918,7 +918,7 @@ void expectMainContext(bool& ran, int* mainLocation, int* fiberLocation) {
+ }
+ 
+ TEST(FiberManager, runInMainContext) {
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -954,7 +954,7 @@ TEST(FiberManager, runInMainContext) {
+ }
+ 
+ TEST(FiberManager, addTaskFinally) {
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -981,7 +981,7 @@ TEST(FiberManager, fibersPoolWithinLimit) {
+   FiberManager::Options opts;
+   opts.maxFibersPoolSize = 5;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>(), opts);
++  FiberManager manager(folly::make_unique<SimpleLoopController>(), opts);
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -1010,7 +1010,7 @@ TEST(FiberManager, fibersPoolOverLimit) {
+   FiberManager::Options opts;
+   opts.maxFibersPoolSize = 5;
+ 
+-  FiberManager manager(std::make_unique<SimpleLoopController>(), opts);
++  FiberManager manager(folly::make_unique<SimpleLoopController>(), opts);
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -1032,7 +1032,7 @@ TEST(FiberManager, fibersPoolOverLimit) {
+ }
+ 
+ TEST(FiberManager, remoteFiberBasic) {
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -1070,7 +1070,7 @@ TEST(FiberManager, remoteFiberBasic) {
+ }
+ 
+ TEST(FiberManager, addTaskRemoteBasic) {
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+ 
+   int result[2];
+   result[0] = result[1] = 0;
+@@ -1111,7 +1111,7 @@ TEST(FiberManager, addTaskRemoteBasic) {
+ 
+ TEST(FiberManager, remoteHasTasks) {
+   size_t counter = 0;
+-  FiberManager fm(std::make_unique<SimpleLoopController>());
++  FiberManager fm(folly::make_unique<SimpleLoopController>());
+   std::thread remote([&]() { fm.addTaskRemote([&]() { ++counter; }); });
+ 
+   remote.join();
+@@ -1127,7 +1127,7 @@ TEST(FiberManager, remoteHasTasks) {
+ TEST(FiberManager, remoteHasReadyTasks) {
+   int result = 0;
+   folly::Optional<Promise<int>> savedPromise;
+-  FiberManager fm(std::make_unique<SimpleLoopController>());
++  FiberManager fm(folly::make_unique<SimpleLoopController>());
+   std::thread remote([&]() {
+     fm.addTaskRemote([&]() {
+       result = await(
+@@ -1154,7 +1154,7 @@ TEST(FiberManager, remoteHasReadyTasks) {
+ 
+ template <typename Data>
+ void testFiberLocal() {
+-  FiberManager fm(LocalType<Data>(), std::make_unique<SimpleLoopController>());
++  FiberManager fm(LocalType<Data>(), folly::make_unique<SimpleLoopController>());
+ 
+   fm.addTask([]() {
+     EXPECT_EQ(42, local<Data>().value);
+@@ -1229,7 +1229,7 @@ TEST(FiberManager, fiberLocalDestructor) {
+   };
+ 
+   FiberManager fm(
+-      LocalType<CrazyData>(), std::make_unique<SimpleLoopController>());
++      LocalType<CrazyData>(), folly::make_unique<SimpleLoopController>());
+ 
+   fm.addTask([]() { local<CrazyData>().data = 41; });
+ 
+@@ -1238,7 +1238,7 @@ TEST(FiberManager, fiberLocalDestructor) {
+ }
+ 
+ TEST(FiberManager, yieldTest) {
+-  FiberManager manager(std::make_unique<SimpleLoopController>());
++  FiberManager manager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(manager.loopController());
+ 
+@@ -1259,7 +1259,7 @@ TEST(FiberManager, yieldTest) {
+ }
+ 
+ TEST(FiberManager, RequestContext) {
+-  FiberManager fm(std::make_unique<SimpleLoopController>());
++  FiberManager fm(folly::make_unique<SimpleLoopController>());
+ 
+   bool checkRun1 = false;
+   bool checkRun2 = false;
+@@ -1357,7 +1357,7 @@ TEST(FiberManager, resizePeriodically) {
+   opts.fibersPoolResizePeriodMs = 300;
+   opts.maxFibersPoolSize = 5;
+ 
+-  FiberManager manager(std::make_unique<EventBaseLoopController>(), opts);
++  FiberManager manager(folly::make_unique<EventBaseLoopController>(), opts);
+ 
+   folly::EventBase evb;
+   dynamic_cast<EventBaseLoopController&>(manager.loopController())
+@@ -1415,7 +1415,7 @@ TEST(FiberManager, resizePeriodically) {
+ }
+ 
+ TEST(FiberManager, batonWaitTimeoutHandler) {
+-  FiberManager manager(std::make_unique<EventBaseLoopController>());
++  FiberManager manager(folly::make_unique<EventBaseLoopController>());
+ 
+   folly::EventBase evb;
+   dynamic_cast<EventBaseLoopController&>(manager.loopController())
+@@ -1447,7 +1447,7 @@ TEST(FiberManager, batonWaitTimeoutHandler) {
+ }
+ 
+ TEST(FiberManager, batonWaitTimeoutMany) {
+-  FiberManager manager(std::make_unique<EventBaseLoopController>());
++  FiberManager manager(folly::make_unique<EventBaseLoopController>());
+ 
+   folly::EventBase evb;
+   dynamic_cast<EventBaseLoopController&>(manager.loopController())
+@@ -1477,7 +1477,7 @@ TEST(FiberManager, batonWaitTimeoutMany) {
+ }
+ 
+ TEST(FiberManager, remoteFutureTest) {
+-  FiberManager fiberManager(std::make_unique<SimpleLoopController>());
++  FiberManager fiberManager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(fiberManager.loopController());
+ 
+@@ -1495,7 +1495,7 @@ TEST(FiberManager, remoteFutureTest) {
+ 
+ // Test that a void function produes a Future<Unit>.
+ TEST(FiberManager, remoteFutureVoidUnitTest) {
+-  FiberManager fiberManager(std::make_unique<SimpleLoopController>());
++  FiberManager fiberManager(folly::make_unique<SimpleLoopController>());
+   auto& loopController =
+       dynamic_cast<SimpleLoopController&>(fiberManager.loopController());
+ 
+@@ -1554,7 +1554,7 @@ TEST(FiberManager, semaphore) {
+   int counterB = 0;
+ 
+   auto task = [&sem](int& counter, folly::fibers::Baton& baton) {
+-    FiberManager manager(std::make_unique<EventBaseLoopController>());
++    FiberManager manager(folly::make_unique<EventBaseLoopController>());
+     folly::EventBase evb;
+     dynamic_cast<EventBaseLoopController&>(manager.loopController())
+         .attachEventBase(evb);
+@@ -2046,7 +2046,7 @@ TEST(FiberManager, VirtualEventBase) {
+     folly::ScopedEventBaseThread thread;
+ 
+     auto evb1 =
+-        std::make_unique<folly::VirtualEventBase>(*thread.getEventBase());
++        folly::make_unique<folly::VirtualEventBase>(*thread.getEventBase());
+     auto& evb2 = thread.getEventBase()->getVirtualEventBase();
+ 
+     getFiberManager(*evb1).addTaskRemote([&] {
+@@ -2143,7 +2143,7 @@ TEST(FiberManager, recordStack) {
+     folly::fibers::FiberManager::Options opts;
+     opts.recordStackEvery = 1;
+ 
+-    FiberManager fm(std::make_unique<SimpleLoopController>(), opts);
++    FiberManager fm(folly::make_unique<SimpleLoopController>(), opts);
+     auto& loopController =
+         dynamic_cast<SimpleLoopController&>(fm.loopController());
+ 
+diff --git a/folly/fibers/test/FibersTestApp.cpp b/folly/fibers/test/FibersTestApp.cpp
+index 1c4ca55..f448eee 100644
+--- a/folly/fibers/test/FibersTestApp.cpp
++++ b/folly/fibers/test/FibersTestApp.cpp
+@@ -26,7 +26,7 @@ using namespace folly::fibers;
+ struct Application {
+  public:
+   Application()
+-      : fiberManager(std::make_unique<SimpleLoopController>()),
++      : fiberManager(folly::make_unique<SimpleLoopController>()),
+         toSend(20),
+         maxOutstanding(5) {}
+ 
+diff --git a/folly/futures/Future-inl.h b/folly/futures/Future-inl.h
+index c4f9ca2..fc74f82 100644
+--- a/folly/futures/Future-inl.h
++++ b/folly/futures/Future-inl.h
+@@ -1190,7 +1190,7 @@ Future<Unit> whileDo(P&& predicate, F&& thunk) {
+ template <class F>
+ Future<Unit> times(const int n, F&& thunk) {
+   return folly::whileDo(
+-      [ n, count = std::make_unique<std::atomic<int>>(0) ]() mutable {
++      [ n, count = folly::make_unique<std::atomic<int>>(0) ]() mutable {
+         return count->fetch_add(1) < n;
+       },
+       std::forward<F>(thunk));
+diff --git a/folly/futures/detail/Core.h b/folly/futures/detail/Core.h
+index 3124cda..790a45c 100644
+--- a/folly/futures/detail/Core.h
++++ b/folly/futures/detail/Core.h
+@@ -240,7 +240,7 @@ class Core final {
+       interruptLock_.lock();
+     }
+     if (!interrupt_ && !hasResult()) {
+-      interrupt_ = std::make_unique<exception_wrapper>(std::move(e));
++      interrupt_ = folly::make_unique<exception_wrapper>(std::move(e));
+       if (interruptHandler_) {
+         interruptHandler_(*interrupt_);
+       }
+diff --git a/folly/futures/test/FilterTest.cpp b/folly/futures/test/FilterTest.cpp
+index b4139d4..e503f51 100644
+--- a/folly/futures/test/FilterTest.cpp
++++ b/folly/futures/test/FilterTest.cpp
+@@ -31,7 +31,7 @@ TEST(Filter, alwaysFalse) {
+ TEST(Filter, moveOnlyValue) {
+   EXPECT_EQ(
+       42,
+-      *makeFuture(std::make_unique<int>(42))
++      *makeFuture(folly::make_unique<int>(42))
+            .filter([](std::unique_ptr<int> const&) { return true; })
+            .get());
+ }
+diff --git a/folly/futures/test/FutureSplitterTest.cpp b/folly/futures/test/FutureSplitterTest.cpp
+index 53c2879..d67c757 100644
+--- a/folly/futures/test/FutureSplitterTest.cpp
++++ b/folly/futures/test/FutureSplitterTest.cpp
+@@ -108,7 +108,7 @@ TEST(FutureSplitter, splitFutureMoveAssignable) {
+ 
+ TEST(FutureSplitter, splitFutureScope) {
+   Promise<int> p;
+-  auto pSP = std::make_unique<FutureSplitter<int>>(p.getFuture());
++  auto pSP = folly::make_unique<FutureSplitter<int>>(p.getFuture());
+   auto f1 = pSP->getFuture();
+   EXPECT_FALSE(f1.isReady());
+   pSP.reset();
+diff --git a/folly/futures/test/FutureTest.cpp b/folly/futures/test/FutureTest.cpp
+index 3bfb8e3..2cb96fa 100644
+--- a/folly/futures/test/FutureTest.cpp
++++ b/folly/futures/test/FutureTest.cpp
+@@ -725,8 +725,8 @@ TEST(Future, detachRace) {
+   // slow test so I won't do that but if it ever fails, take it seriously, and
+   // run the test binary with "--gtest_repeat=10000 --gtest_filter=*detachRace"
+   // (Don't forget to enable ASAN)
+-  auto p = std::make_unique<Promise<bool>>();
+-  auto f = std::make_unique<Future<bool>>(p->getFuture());
++  auto p = folly::make_unique<Promise<bool>>();
++  auto f = folly::make_unique<Future<bool>>(p->getFuture());
+   folly::Baton<> baton;
+   std::thread t1([&]{
+     baton.post();
+@@ -821,7 +821,7 @@ TEST(Future, RequestContext) {
+   {
+     folly::RequestContextScopeGuard rctx;
+     RequestContext::get()->setContextData(
+-        "key", std::make_unique<MyRequestData>(true));
++        "key", folly::make_unique<MyRequestData>(true));
+     auto checker = [](int lineno) {
+       return [lineno](Try<int>&& /* t */) {
+         auto d = static_cast<MyRequestData*>(
+diff --git a/folly/futures/test/NonCopyableLambdaTest.cpp b/folly/futures/test/NonCopyableLambdaTest.cpp
+index 3e36c2c..f9e6f4b 100644
+--- a/folly/futures/test/NonCopyableLambdaTest.cpp
++++ b/folly/futures/test/NonCopyableLambdaTest.cpp
+@@ -38,7 +38,7 @@ TEST(NonCopyableLambda, basic) {
+ 
+ TEST(NonCopyableLambda, unique_ptr) {
+   Promise<Unit> promise;
+-  auto int_ptr = std::make_unique<int>(1);
++  auto int_ptr = folly::make_unique<int>(1);
+ 
+   EXPECT_EQ(*int_ptr, 1);
+ 
+diff --git a/folly/futures/test/PromiseTest.cpp b/folly/futures/test/PromiseTest.cpp
+index 3673dc1..ff9cef9 100644
+--- a/folly/futures/test/PromiseTest.cpp
++++ b/folly/futures/test/PromiseTest.cpp
+@@ -134,7 +134,7 @@ TEST(Promise, isFulfilledWithFuture) {
+ }
+ 
+ TEST(Promise, brokenOnDelete) {
+-  auto p = std::make_unique<Promise<int>>();
++  auto p = folly::make_unique<Promise<int>>();
+   auto f = p->getFuture();
+ 
+   EXPECT_FALSE(f.isReady());
+@@ -149,10 +149,10 @@ TEST(Promise, brokenOnDelete) {
+ }
+ 
+ TEST(Promise, brokenPromiseHasTypeInfo) {
+-  auto pInt = std::make_unique<Promise<int>>();
++  auto pInt = folly::make_unique<Promise<int>>();
+   auto fInt = pInt->getFuture();
+ 
+-  auto pFloat = std::make_unique<Promise<float>>();
++  auto pFloat = folly::make_unique<Promise<float>>();
+   auto fFloat = pFloat->getFuture();
+ 
+   pInt.reset();
+diff --git a/folly/futures/test/TestExecutorTest.cpp b/folly/futures/test/TestExecutorTest.cpp
+index 5af5893..64d30d0 100644
+--- a/folly/futures/test/TestExecutorTest.cpp
++++ b/folly/futures/test/TestExecutorTest.cpp
+@@ -24,7 +24,7 @@ using namespace folly;
+ TEST(TestExecutor, parallel_run) {
+   mutex m;
+   set<thread::id> ids;
+-  auto executor = std::make_unique<TestExecutor>(4);
++  auto executor = folly::make_unique<TestExecutor>(4);
+   const auto numThreads = executor->numThreads();
+   EXPECT_EQ(4, numThreads);
+   for (auto idx = 0U; idx < numThreads * 10; ++idx) {
+diff --git a/folly/futures/test/ViaTest.cpp b/folly/futures/test/ViaTest.cpp
+index f843a02..f7f6de6 100644
+--- a/folly/futures/test/ViaTest.cpp
++++ b/folly/futures/test/ViaTest.cpp
+@@ -336,7 +336,7 @@ class ThreadExecutor : public Executor {
+ TEST(Via, viaThenGetWasRacy) {
+   ThreadExecutor x;
+   std::unique_ptr<int> val =
+-      folly::via(&x).then([] { return std::make_unique<int>(42); }).get();
++      folly::via(&x).then([] { return folly::make_unique<int>(42); }).get();
+   ASSERT_TRUE(!!val);
+   EXPECT_EQ(42, *val);
+ }
+@@ -602,7 +602,7 @@ TEST(ViaFunc, isSticky) {
+ 
+ TEST(ViaFunc, moveOnly) {
+   ManualExecutor x;
+-  auto intp = std::make_unique<int>(42);
++  auto intp = folly::make_unique<int>(42);
+ 
+   EXPECT_EQ(42, via(&x, [intp = std::move(intp)] { return *intp; }).getVia(&x));
+ }
+diff --git a/folly/gen/test/BaseTest.cpp b/folly/gen/test/BaseTest.cpp
+index 999d74b..c61b120 100644
+--- a/folly/gen/test/BaseTest.cpp
++++ b/folly/gen/test/BaseTest.cpp
+@@ -1274,14 +1274,14 @@ TEST(Gen, Unwrap) {
+   EXPECT_EQ(4, o | unwrap);
+   EXPECT_THROW(e | unwrap, OptionalEmptyException);
+ 
+-  auto oup = folly::make_optional(std::make_unique<int>(5));
++  auto oup = folly::make_optional(folly::make_unique<int>(5));
+   // optional has a value, and that value is non-null
+   EXPECT_TRUE(bool(oup | unwrap));
+   EXPECT_EQ(5, *(oup | unwrap));
+   EXPECT_TRUE(oup.hasValue()); // still has a pointer (null or not)
+   EXPECT_TRUE(bool(oup.value())); // that value isn't null
+ 
+-  auto moved1 = std::move(oup) | unwrapOr(std::make_unique<int>(6));
++  auto moved1 = std::move(oup) | unwrapOr(folly::make_unique<int>(6));
+   // oup still has a value, but now it's now nullptr since the pointer was moved
+   // into moved1
+   EXPECT_TRUE(oup.hasValue());
+@@ -1289,12 +1289,12 @@ TEST(Gen, Unwrap) {
+   EXPECT_TRUE(bool(moved1));
+   EXPECT_EQ(5, *moved1);
+ 
+-  auto moved2 = std::move(oup) | unwrapOr(std::make_unique<int>(7));
++  auto moved2 = std::move(oup) | unwrapOr(folly::make_unique<int>(7));
+   // oup's still-valid nullptr value wins here, the pointer to 7 doesn't apply
+   EXPECT_FALSE(moved2);
+ 
+   oup.clear();
+-  auto moved3 = std::move(oup) | unwrapOr(std::make_unique<int>(8));
++  auto moved3 = std::move(oup) | unwrapOr(folly::make_unique<int>(8));
+   // oup is empty now, so the unwrapOr comes into play.
+   EXPECT_TRUE(bool(moved3));
+   EXPECT_EQ(8, *moved3);
+@@ -1332,7 +1332,7 @@ TEST(Gen, Unwrap) {
+ 
+   {
+     auto opt = folly::make_optional(std::make_shared<int>(8));
+-    auto fallback = unwrapOr(std::make_unique<int>(9));
++    auto fallback = unwrapOr(folly::make_unique<int>(9));
+     // fallback must be std::move'd to be used
+     EXPECT_EQ(8, *(opt | std::move(fallback)));
+     EXPECT_TRUE(bool(opt.value())); // shared_ptr copied out, not moved
+diff --git a/folly/gen/test/ParallelMapTest.cpp b/folly/gen/test/ParallelMapTest.cpp
+index 435a348..775378e 100644
+--- a/folly/gen/test/ParallelMapTest.cpp
++++ b/folly/gen/test/ParallelMapTest.cpp
+@@ -101,18 +101,18 @@ TEST(Pmap, Rvalues) {
+   {
+     auto mapResult
+         = seq(1)
+-        | map([](int x) { return std::make_unique<int>(x); })
++        | map([](int x) { return folly::make_unique<int>(x); })
+         | map([](std::unique_ptr<int> x) {
+-            return std::make_unique<int>(*x * *x); })
++            return folly::make_unique<int>(*x * *x); })
+         | map([](std::unique_ptr<int> x) { return *x; })
+         | take(1000)
+         | sum;
+ 
+     auto pmapResult
+         = seq(1)
+-        | pmap([](int x) { return std::make_unique<int>(x); })
++        | pmap([](int x) { return folly::make_unique<int>(x); })
+         | pmap([](std::unique_ptr<int> x) {
+-            return std::make_unique<int>(*x * *x); })
++            return folly::make_unique<int>(*x * *x); })
+         | pmap([](std::unique_ptr<int> x) { return *x; })
+         | take(1000)
+         | sum;
+@@ -124,17 +124,17 @@ TEST(Pmap, Rvalues) {
+   {
+     auto mapResult
+         = seq(1, 1000)
+-        | map([](int x) { return std::make_unique<int>(x); })
++        | map([](int x) { return folly::make_unique<int>(x); })
+         | map([](std::unique_ptr<int> x) {
+-            return std::make_unique<int>(*x * *x); })
++            return folly::make_unique<int>(*x * *x); })
+         | map([](std::unique_ptr<int> x) { return *x; })
+         | sum;
+ 
+     auto pmapResult
+         = seq(1, 1000)
+-        | pmap([](int x) { return std::make_unique<int>(x); })
++        | pmap([](int x) { return folly::make_unique<int>(x); })
+         | pmap([](std::unique_ptr<int> x) {
+-            return std::make_unique<int>(*x * *x); })
++            return folly::make_unique<int>(*x * *x); })
+         | pmap([](std::unique_ptr<int> x) { return *x; })
+         | sum;
+ 
+diff --git a/folly/io/Compression.cpp b/folly/io/Compression.cpp
+index b523e69..92a5b81 100644
+--- a/folly/io/Compression.cpp
++++ b/folly/io/Compression.cpp
+@@ -432,7 +432,7 @@ class NoCompressionCodec final : public Codec {
+ };
+ 
+ std::unique_ptr<Codec> NoCompressionCodec::create(int level, CodecType type) {
+-  return std::make_unique<NoCompressionCodec>(level, type);
++  return folly::make_unique<NoCompressionCodec>(level, type);
+ }
+ 
+ NoCompressionCodec::NoCompressionCodec(int level, CodecType type)
+@@ -559,7 +559,7 @@ class LZ4Codec final : public Codec {
+ };
+ 
+ std::unique_ptr<Codec> LZ4Codec::create(int level, CodecType type) {
+-  return std::make_unique<LZ4Codec>(level, type);
++  return folly::make_unique<LZ4Codec>(level, type);
+ }
+ 
+ LZ4Codec::LZ4Codec(int level, CodecType type) : Codec(type) {
+@@ -710,7 +710,7 @@ class LZ4FrameCodec final : public Codec {
+ /* static */ std::unique_ptr<Codec> LZ4FrameCodec::create(
+     int level,
+     CodecType type) {
+-  return std::make_unique<LZ4FrameCodec>(level, type);
++  return folly::make_unique<LZ4FrameCodec>(level, type);
+ }
+ 
+ static constexpr uint32_t kLZ4FrameMagicLE = 0x184D2204;
+@@ -917,7 +917,7 @@ class SnappyCodec final : public Codec {
+ };
+ 
+ std::unique_ptr<Codec> SnappyCodec::create(int level, CodecType type) {
+-  return std::make_unique<SnappyCodec>(level, type);
++  return folly::make_unique<SnappyCodec>(level, type);
+ }
+ 
+ SnappyCodec::SnappyCodec(int level, CodecType type) : Codec(type) {
+@@ -1079,7 +1079,7 @@ uint64_t ZlibCodec::doMaxCompressedLength(uint64_t uncompressedLength) const {
+ }
+ 
+ std::unique_ptr<Codec> ZlibCodec::create(int level, CodecType type) {
+-  return std::make_unique<ZlibCodec>(level, type);
++  return folly::make_unique<ZlibCodec>(level, type);
+ }
+ 
+ ZlibCodec::ZlibCodec(int level, CodecType type) : Codec(type) {
+@@ -1369,7 +1369,7 @@ bool LZMA2Codec::canUncompress(const IOBuf* data, Optional<uint64_t>) const {
+ }
+ 
+ std::unique_ptr<Codec> LZMA2Codec::create(int level, CodecType type) {
+-  return std::make_unique<LZMA2Codec>(level, type);
++  return folly::make_unique<LZMA2Codec>(level, type);
+ }
+ 
+ LZMA2Codec::LZMA2Codec(int level, CodecType type) : Codec(type) {
+@@ -1879,7 +1879,7 @@ class Bzip2Codec final : public Codec {
+ /* static */ std::unique_ptr<Codec> Bzip2Codec::create(
+     int level,
+     CodecType type) {
+-  return std::make_unique<Bzip2Codec>(level, type);
++  return folly::make_unique<Bzip2Codec>(level, type);
+ }
+ 
+ Bzip2Codec::Bzip2Codec(int level, CodecType type) : Codec(type) {
+@@ -2132,7 +2132,7 @@ void AutomaticCodec::addCodecIfSupported(CodecType type) {
+ 
+ /* static */ std::unique_ptr<Codec> AutomaticCodec::create(
+     std::vector<std::unique_ptr<Codec>> customCodecs) {
+-  return std::make_unique<AutomaticCodec>(std::move(customCodecs));
++  return folly::make_unique<AutomaticCodec>(std::move(customCodecs));
+ }
+ 
+ AutomaticCodec::AutomaticCodec(std::vector<std::unique_ptr<Codec>> customCodecs)
+diff --git a/folly/io/Cursor.h b/folly/io/Cursor.h
+index ff9082b..0eaf641 100644
+--- a/folly/io/Cursor.h
++++ b/folly/io/Cursor.h
+@@ -439,7 +439,7 @@ class CursorBase {
+ 
+   size_t cloneAtMost(std::unique_ptr<folly::IOBuf>& buf, size_t len) {
+     if (!buf) {
+-      buf = std::make_unique<folly::IOBuf>();
++      buf = folly::make_unique<folly::IOBuf>();
+     }
+     return cloneAtMost(*buf, len);
+   }
+diff --git a/folly/io/IOBuf.cpp b/folly/io/IOBuf.cpp
+index c34b5f4..e01cc83 100644
+--- a/folly/io/IOBuf.cpp
++++ b/folly/io/IOBuf.cpp
+@@ -258,7 +258,7 @@ unique_ptr<IOBuf> IOBuf::createCombined(uint64_t capacity) {
+ }
+ 
+ unique_ptr<IOBuf> IOBuf::createSeparate(uint64_t capacity) {
+-  return std::make_unique<IOBuf>(CREATE, capacity);
++  return folly::make_unique<IOBuf>(CREATE, capacity);
+ }
+ 
+ unique_ptr<IOBuf> IOBuf::createChain(
+@@ -309,8 +309,8 @@ unique_ptr<IOBuf> IOBuf::takeOwnership(void* buf, uint64_t capacity,
+     //
+     // Note that we always pass freeOnError as false to the constructor.
+     // If the constructor throws we'll handle it below.  (We have to handle
+-    // allocation failures from std::make_unique too.)
+-    return std::make_unique<IOBuf>(
++    // allocation failures from folly::make_unique too.)
++    return folly::make_unique<IOBuf>(
+         TAKE_OWNERSHIP, buf, capacity, length, freeFn, userData, false);
+   } catch (...) {
+     takeOwnershipError(freeOnError, buf, freeFn, userData);
+@@ -332,7 +332,7 @@ IOBuf::IOBuf(WrapBufferOp op, ByteRange br)
+ }
+ 
+ unique_ptr<IOBuf> IOBuf::wrapBuffer(const void* buf, uint64_t capacity) {
+-  return std::make_unique<IOBuf>(WRAP_BUFFER, buf, capacity);
++  return folly::make_unique<IOBuf>(WRAP_BUFFER, buf, capacity);
+ }
+ 
+ IOBuf IOBuf::wrapBufferAsValue(const void* buf, uint64_t capacity) {
+@@ -506,15 +506,15 @@ void IOBuf::prependChain(unique_ptr<IOBuf>&& iobuf) {
+ }
+ 
+ unique_ptr<IOBuf> IOBuf::clone() const {
+-  return std::make_unique<IOBuf>(cloneAsValue());
++  return folly::make_unique<IOBuf>(cloneAsValue());
+ }
+ 
+ unique_ptr<IOBuf> IOBuf::cloneOne() const {
+-  return std::make_unique<IOBuf>(cloneOneAsValue());
++  return folly::make_unique<IOBuf>(cloneOneAsValue());
+ }
+ 
+ unique_ptr<IOBuf> IOBuf::cloneCoalesced() const {
+-  return std::make_unique<IOBuf>(cloneCoalescedAsValue());
++  return folly::make_unique<IOBuf>(cloneCoalescedAsValue());
+ }
+ 
+ IOBuf IOBuf::cloneAsValue() const {
+diff --git a/folly/io/async/AsyncSSLSocket.cpp b/folly/io/async/AsyncSSLSocket.cpp
+index 234ab5a..57f8641 100644
+--- a/folly/io/async/AsyncSSLSocket.cpp
++++ b/folly/io/async/AsyncSSLSocket.cpp
+@@ -1338,7 +1338,7 @@ AsyncSSLSocket::performRead(void** buf, size_t* buflen, size_t* offset) {
+                << "): client intitiated SSL renegotiation not permitted";
+     return ReadResult(
+         READ_ERROR,
+-        std::make_unique<SSLException>(SSLError::CLIENT_RENEGOTIATION));
++        folly::make_unique<SSLException>(SSLError::CLIENT_RENEGOTIATION));
+   }
+   if (bytes <= 0) {
+     int error = SSL_get_error(ssl_, bytes);
+@@ -1358,7 +1358,7 @@ AsyncSSLSocket::performRead(void** buf, size_t* buflen, size_t* offset) {
+                  << "): unsupported SSL renegotiation during read";
+       return ReadResult(
+           READ_ERROR,
+-          std::make_unique<SSLException>(SSLError::INVALID_RENEGOTIATION));
++          folly::make_unique<SSLException>(SSLError::INVALID_RENEGOTIATION));
+     } else {
+       if (zero_return(error, bytes)) {
+         return ReadResult(bytes);
+@@ -1375,7 +1375,7 @@ AsyncSSLSocket::performRead(void** buf, size_t* buflen, size_t* offset) {
+               << "reason: " << ERR_reason_error_string(errError);
+       return ReadResult(
+           READ_ERROR,
+-          std::make_unique<SSLException>(error, errError, bytes, errno));
++          folly::make_unique<SSLException>(error, errError, bytes, errno));
+     }
+   } else {
+     appBytesReceived_ += bytes;
+@@ -1418,7 +1418,7 @@ AsyncSocket::WriteResult AsyncSSLSocket::interpretSSLError(int rc, int error) {
+                << "unsupported SSL renegotiation during write";
+     return WriteResult(
+         WRITE_ERROR,
+-        std::make_unique<SSLException>(SSLError::INVALID_RENEGOTIATION));
++        folly::make_unique<SSLException>(SSLError::INVALID_RENEGOTIATION));
+   } else {
+     if (zero_return(error, rc)) {
+       return WriteResult(0);
+@@ -1431,7 +1431,7 @@ AsyncSocket::WriteResult AsyncSSLSocket::interpretSSLError(int rc, int error) {
+             << ", reason: " << ERR_reason_error_string(errError);
+     return WriteResult(
+         WRITE_ERROR,
+-        std::make_unique<SSLException>(error, errError, rc, errno));
++        folly::make_unique<SSLException>(error, errError, rc, errno));
+   }
+ }
+ 
+@@ -1452,7 +1452,7 @@ AsyncSocket::WriteResult AsyncSSLSocket::performWrite(
+                << "TODO: AsyncSSLSocket currently does not support calling "
+                << "write() before the handshake has fully completed";
+     return WriteResult(
+-        WRITE_ERROR, std::make_unique<SSLException>(SSLError::EARLY_WRITE));
++        WRITE_ERROR, folly::make_unique<SSLException>(SSLError::EARLY_WRITE));
+   }
+ 
+   // Declare a buffer used to hold small write requests.  It could point to a
+diff --git a/folly/io/async/AsyncSocket.cpp b/folly/io/async/AsyncSocket.cpp
+index 2ecfbb4..e0670b8 100644
+--- a/folly/io/async/AsyncSocket.cpp
++++ b/folly/io/async/AsyncSocket.cpp
+@@ -2025,7 +2025,7 @@ AsyncSocket::sendSocketMessage(int fd, struct msghdr* msg, int msg_flags) {
+         registerForConnectEvents();
+       } catch (const AsyncSocketException& ex) {
+         return WriteResult(
+-            WRITE_ERROR, std::make_unique<AsyncSocketException>(ex));
++            WRITE_ERROR, folly::make_unique<AsyncSocketException>(ex));
+       }
+       // Let's fake it that no bytes were written and return an errno.
+       errno = EAGAIN;
+@@ -2048,7 +2048,7 @@ AsyncSocket::sendSocketMessage(int fd, struct msghdr* msg, int msg_flags) {
+         totalWritten = -1;
+       } catch (const AsyncSocketException& ex) {
+         return WriteResult(
+-            WRITE_ERROR, std::make_unique<AsyncSocketException>(ex));
++            WRITE_ERROR, folly::make_unique<AsyncSocketException>(ex));
+       }
+     } else if (errno == EAGAIN) {
+       // Normally sendmsg would indicate that the write would block.
+@@ -2057,7 +2057,7 @@ AsyncSocket::sendSocketMessage(int fd, struct msghdr* msg, int msg_flags) {
+       // instead, and is an error condition indicating no fds available.
+       return WriteResult(
+           WRITE_ERROR,
+-          std::make_unique<AsyncSocketException>(
++          folly::make_unique<AsyncSocketException>(
+               AsyncSocketException::UNKNOWN, "No more free local ports"));
+     }
+   } else {
+diff --git a/folly/io/async/EventBase.cpp b/folly/io/async/EventBase.cpp
+index a485d33..d0d58de 100644
+--- a/folly/io/async/EventBase.cpp
++++ b/folly/io/async/EventBase.cpp
+@@ -740,7 +740,7 @@ const char* EventBase::getLibeventMethod() { return event_get_method(); }
+ 
+ VirtualEventBase& EventBase::getVirtualEventBase() {
+   folly::call_once(virtualEventBaseInitFlag_, [&] {
+-    virtualEventBase_ = std::make_unique<VirtualEventBase>(*this);
++    virtualEventBase_ = folly::make_unique<VirtualEventBase>(*this);
+   });
+ 
+   return *virtualEventBase_;
+diff --git a/folly/io/async/EventBaseThread.cpp b/folly/io/async/EventBaseThread.cpp
+index 4b74ed0..0b260e8 100644
+--- a/folly/io/async/EventBaseThread.cpp
++++ b/folly/io/async/EventBaseThread.cpp
+@@ -51,7 +51,7 @@ void EventBaseThread::start() {
+   if (th_) {
+     return;
+   }
+-  th_ = std::make_unique<ScopedEventBaseThread>(ebm_);
++  th_ = folly::make_unique<ScopedEventBaseThread>(ebm_);
+ }
+ 
+ void EventBaseThread::stop() {
+diff --git a/folly/io/async/HHWheelTimer.cpp b/folly/io/async/HHWheelTimer.cpp
+index 8354d4c..b6c984b 100644
+--- a/folly/io/async/HHWheelTimer.cpp
++++ b/folly/io/async/HHWheelTimer.cpp
+@@ -247,7 +247,7 @@ size_t HHWheelTimer::cancelAll() {
+   if (count_ != 0) {
+     const uint64_t numElements = WHEEL_BUCKETS * WHEEL_SIZE;
+     auto maxBuckets = std::min(numElements, count_);
+-    auto buckets = std::make_unique<CallbackList[]>(maxBuckets);
++    auto buckets = folly::make_unique<CallbackList[]>(maxBuckets);
+     size_t countBuckets = 0;
+     for (auto& tick : buckets_) {
+       for (auto& bucket : tick) {
+diff --git a/folly/io/async/TimeoutManager.cpp b/folly/io/async/TimeoutManager.cpp
+index 23f719f..8e0471d 100644
+--- a/folly/io/async/TimeoutManager.cpp
++++ b/folly/io/async/TimeoutManager.cpp
+@@ -68,7 +68,7 @@ struct TimeoutManager::CobTimeouts {
+ };
+ 
+ TimeoutManager::TimeoutManager()
+-    : cobTimeouts_(std::make_unique<CobTimeouts>()) {}
++    : cobTimeouts_(folly::make_unique<CobTimeouts>()) {}
+ 
+ void TimeoutManager::runAfterDelay(
+     Func cob,
+@@ -89,7 +89,7 @@ bool TimeoutManager::tryRunAfterDelay(
+   }
+ 
+   auto timeout =
+-      std::make_unique<CobTimeouts::CobTimeout>(this, std::move(cob), internal);
++      folly::make_unique<CobTimeouts::CobTimeout>(this, std::move(cob), internal);
+   if (!timeout->scheduleTimeout(milliseconds)) {
+     return false;
+   }
+diff --git a/folly/io/async/test/AsyncSSLSocketTest.cpp b/folly/io/async/test/AsyncSSLSocketTest.cpp
+index 36a6802..be1a6f5 100644
+--- a/folly/io/async/test/AsyncSSLSocketTest.cpp
++++ b/folly/io/async/test/AsyncSSLSocketTest.cpp
+@@ -181,7 +181,7 @@ TEST(AsyncSSLSocketTest, ReadAfterClose) {
+   ReadEOFCallback readCallback(&writeCallback);
+   HandshakeCallback handshakeCallback(&readCallback);
+   SSLServerAcceptCallback acceptCallback(&handshakeCallback);
+-  auto server = std::make_unique<TestSSLServer>(&acceptCallback);
++  auto server = folly::make_unique<TestSSLServer>(&acceptCallback);
+ 
+   // Set up SSL context.
+   auto sslContext = std::make_shared<SSLContext>();
+@@ -402,8 +402,8 @@ class NextProtocolTest : public testing::TestWithParam<NextProtocolTypePair> {
+       new AsyncSSLSocket(clientCtx, &eventBase, fds[0], false));
+     AsyncSSLSocket::UniquePtr serverSock(
+       new AsyncSSLSocket(serverCtx, &eventBase, fds[1], true));
+-    client = std::make_unique<NpnClient>(std::move(clientSock));
+-    server = std::make_unique<NpnServer>(std::move(serverSock));
++    client = folly::make_unique<NpnClient>(std::move(clientSock));
++    server = folly::make_unique<NpnServer>(std::move(serverSock));
+ 
+     eventBase.loop();
+   }
+diff --git a/folly/io/async/test/AsyncSocketTest2.cpp b/folly/io/async/test/AsyncSocketTest2.cpp
+index 3863e1e..7c333e6 100644
+--- a/folly/io/async/test/AsyncSocketTest2.cpp
++++ b/folly/io/async/test/AsyncSocketTest2.cpp
+@@ -2844,7 +2844,7 @@ class MockEvbChangeCallback : public AsyncSocket::EvbChangeCallback {
+ };
+ 
+ TEST(AsyncSocketTest, EvbCallbacks) {
+-  auto cb = std::make_unique<MockEvbChangeCallback>();
++  auto cb = folly::make_unique<MockEvbChangeCallback>();
+   EventBase evb;
+   std::shared_ptr<AsyncSocket> socket = AsyncSocket::newSocket(&evb);
+ 
+diff --git a/folly/io/async/test/AsyncUDPSocketTest.cpp b/folly/io/async/test/AsyncUDPSocketTest.cpp
+index ee42025..609f424 100644
+--- a/folly/io/async/test/AsyncUDPSocketTest.cpp
++++ b/folly/io/async/test/AsyncUDPSocketTest.cpp
+@@ -85,7 +85,7 @@ class UDPServer {
+   void start() {
+     CHECK(evb_->isInEventBaseThread());
+ 
+-    socket_ = std::make_unique<AsyncUDPServerSocket>(evb_, 1500);
++    socket_ = folly::make_unique<AsyncUDPServerSocket>(evb_, 1500);
+ 
+     try {
+       socket_->bind(addr_);
+@@ -157,7 +157,7 @@ class UDPClient
+     CHECK(evb_->isInEventBaseThread());
+ 
+     server_ = server;
+-    socket_ = std::make_unique<AsyncUDPSocket>(evb_);
++    socket_ = folly::make_unique<AsyncUDPSocket>(evb_);
+ 
+     try {
+       socket_->bind(folly::SocketAddress("127.0.0.1", 0));
+diff --git a/folly/io/async/test/DestructorCheckTest.cpp b/folly/io/async/test/DestructorCheckTest.cpp
+index 8c89947..4ad6740 100644
+--- a/folly/io/async/test/DestructorCheckTest.cpp
++++ b/folly/io/async/test/DestructorCheckTest.cpp
+@@ -34,7 +34,7 @@ TEST(DestructorCheckTest, SingleGuard) {
+ }
+ 
+ TEST(DestructorCheckTest, SingleGuardDestroyed) {
+-  auto d = std::make_unique<Derived>();
++  auto d = folly::make_unique<Derived>();
+   Derived::Safety s(*d);
+   ASSERT_FALSE(s.destroyed());
+   d.reset();
+@@ -43,16 +43,16 @@ TEST(DestructorCheckTest, SingleGuardDestroyed) {
+ 
+ TEST(DestructorCheckTest, MultipleGuards) {
+   Derived d;
+-  auto s1 = std::make_unique<Derived::Safety>(d);
+-  auto s2 = std::make_unique<Derived::Safety>(d);
+-  auto s3 = std::make_unique<Derived::Safety>(d);
++  auto s1 = folly::make_unique<Derived::Safety>(d);
++  auto s2 = folly::make_unique<Derived::Safety>(d);
++  auto s3 = folly::make_unique<Derived::Safety>(d);
+ 
+   // Remove the middle of the list.
+   ASSERT_FALSE(s2->destroyed());
+   s2.reset();
+ 
+   // Add in a link after a removal has occurred.
+-  auto s4 = std::make_unique<Derived::Safety>(d);
++  auto s4 = folly::make_unique<Derived::Safety>(d);
+ 
+   // Remove the beginning of the list.
+   ASSERT_FALSE(s1->destroyed());
+@@ -66,11 +66,11 @@ TEST(DestructorCheckTest, MultipleGuards) {
+ }
+ 
+ TEST(DestructorCheckTest, MultipleGuardsDestroyed) {
+-  auto d = std::make_unique<Derived>();
+-  auto s1 = std::make_unique<Derived::Safety>(*d);
+-  auto s2 = std::make_unique<Derived::Safety>(*d);
+-  auto s3 = std::make_unique<Derived::Safety>(*d);
+-  auto s4 = std::make_unique<Derived::Safety>(*d);
++  auto d = folly::make_unique<Derived>();
++  auto s1 = folly::make_unique<Derived::Safety>(*d);
++  auto s2 = folly::make_unique<Derived::Safety>(*d);
++  auto s3 = folly::make_unique<Derived::Safety>(*d);
++  auto s4 = folly::make_unique<Derived::Safety>(*d);
+ 
+   // Remove something from the list.
+   ASSERT_FALSE(s2->destroyed());
+diff --git a/folly/io/async/test/EventBaseLocalTest.cpp b/folly/io/async/test/EventBaseLocalTest.cpp
+index 9a00197..219f93b 100644
+--- a/folly/io/async/test/EventBaseLocalTest.cpp
++++ b/folly/io/async/test/EventBaseLocalTest.cpp
+@@ -79,15 +79,15 @@ TEST(EventBaseLocalTest, getOrCreateNoncopyable) {
+   folly::EventBaseLocal<IntPtr> ints;
+ 
+   EXPECT_EQ(ints.getOrCreate(evb1), IntPtr());
+-  EXPECT_EQ(ints.getOrCreate(evb1, std::make_unique<int>(5)), IntPtr());
++  EXPECT_EQ(ints.getOrCreate(evb1, folly::make_unique<int>(5)), IntPtr());
+ 
+   folly::EventBase evb2;
+-  EXPECT_EQ(*ints.getOrCreate(evb2, std::make_unique<int>(5)), 5);
++  EXPECT_EQ(*ints.getOrCreate(evb2, folly::make_unique<int>(5)), 5);
+ }
+ 
+ TEST(EventBaseLocalTest, emplaceNoncopyable) {
+   folly::EventBase evb;
+   folly::EventBaseLocal<IntPtr> ints;
+-  ints.emplace(evb, std::make_unique<int>(42));
++  ints.emplace(evb, folly::make_unique<int>(42));
+   EXPECT_EQ(42, **ints.get(evb));
+ }
+diff --git a/folly/io/async/test/EventBaseTest.cpp b/folly/io/async/test/EventBaseTest.cpp
+index 4d07fab..75db1a2 100644
+--- a/folly/io/async/test/EventBaseTest.cpp
++++ b/folly/io/async/test/EventBaseTest.cpp
+@@ -1185,7 +1185,7 @@ TEST(EventBaseTest, RunInEventBaseThreadAndWait) {
+   vector<unique_ptr<atomic<size_t>>> atoms(c);
+   for (size_t i = 0; i < c; ++i) {
+     auto& atom = atoms.at(i);
+-    atom = std::make_unique<atomic<size_t>>(0);
++    atom = folly::make_unique<atomic<size_t>>(0);
+   }
+   vector<thread> threads;
+   for (size_t i = 0; i < c; ++i) {
+@@ -1785,7 +1785,7 @@ TEST(EventBaseTest, LoopKeepAliveInLoop) {
+ }
+ 
+ TEST(EventBaseTest, LoopKeepAliveWithLoopForever) {
+-  std::unique_ptr<EventBase> evb = std::make_unique<EventBase>();
++  std::unique_ptr<EventBase> evb = folly::make_unique<EventBase>();
+ 
+   bool done = false;
+ 
+@@ -1813,7 +1813,7 @@ TEST(EventBaseTest, LoopKeepAliveWithLoopForever) {
+ }
+ 
+ TEST(EventBaseTest, LoopKeepAliveShutdown) {
+-  auto evb = std::make_unique<EventBase>();
++  auto evb = folly::make_unique<EventBase>();
+ 
+   bool done = false;
+ 
+@@ -1836,7 +1836,7 @@ TEST(EventBaseTest, LoopKeepAliveShutdown) {
+ }
+ 
+ TEST(EventBaseTest, LoopKeepAliveAtomic) {
+-  auto evb = std::make_unique<EventBase>();
++  auto evb = folly::make_unique<EventBase>();
+ 
+   static constexpr size_t kNumThreads = 100;
+   static constexpr size_t kNumTasks = 100;
+@@ -1846,7 +1846,7 @@ TEST(EventBaseTest, LoopKeepAliveAtomic) {
+   size_t done{0};
+ 
+   for (size_t i = 0; i < kNumThreads; ++i) {
+-    batons.emplace_back(std::make_unique<Baton<>>());
++    batons.emplace_back(folly::make_unique<Baton<>>());
+   }
+ 
+   for (size_t i = 0; i < kNumThreads; ++i) {
+diff --git a/folly/io/async/test/RequestContextTest.cpp b/folly/io/async/test/RequestContextTest.cpp
+index 750ff7f..9df1354 100644
+--- a/folly/io/async/test/RequestContextTest.cpp
++++ b/folly/io/async/test/RequestContextTest.cpp
+@@ -54,7 +54,7 @@ TEST(RequestContext, SimpleTest) {
+ 
+   EXPECT_EQ(nullptr, RequestContext::get()->getContextData("test"));
+ 
+-  RequestContext::get()->setContextData("test", std::make_unique<TestData>(10));
++  RequestContext::get()->setContextData("test", folly::make_unique<TestData>(10));
+   base.runInEventBaseThread([&](){
+       EXPECT_TRUE(RequestContext::get() != nullptr);
+       auto data = dynamic_cast<TestData*>(
+@@ -80,15 +80,15 @@ TEST(RequestContext, SimpleTest) {
+ TEST(RequestContext, setIfAbsentTest) {
+   EXPECT_TRUE(RequestContext::get() != nullptr);
+ 
+-  RequestContext::get()->setContextData("test", std::make_unique<TestData>(10));
++  RequestContext::get()->setContextData("test", folly::make_unique<TestData>(10));
+   EXPECT_FALSE(RequestContext::get()->setContextDataIfAbsent(
+-      "test", std::make_unique<TestData>(20)));
++      "test", folly::make_unique<TestData>(20)));
+   EXPECT_EQ(10,
+             dynamic_cast<TestData*>(
+                 RequestContext::get()->getContextData("test"))->data_);
+ 
+   EXPECT_TRUE(RequestContext::get()->setContextDataIfAbsent(
+-      "test2", std::make_unique<TestData>(20)));
++      "test2", folly::make_unique<TestData>(20)));
+   EXPECT_EQ(20,
+             dynamic_cast<TestData*>(
+                 RequestContext::get()->getContextData("test2"))->data_);
+@@ -100,13 +100,13 @@ TEST(RequestContext, setIfAbsentTest) {
+ TEST(RequestContext, testSetUnset) {
+   RequestContext::create();
+   auto ctx1 = RequestContext::saveContext();
+-  ctx1->setContextData("test", std::make_unique<TestData>(10));
++  ctx1->setContextData("test", folly::make_unique<TestData>(10));
+   auto testData1 = dynamic_cast<TestData*>(ctx1->getContextData("test"));
+ 
+   // Override RequestContext
+   RequestContext::create();
+   auto ctx2 = RequestContext::saveContext();
+-  ctx2->setContextData("test", std::make_unique<TestData>(20));
++  ctx2->setContextData("test", folly::make_unique<TestData>(20));
+   auto testData2 = dynamic_cast<TestData*>(ctx2->getContextData("test"));
+ 
+   // Check ctx1->onUnset was called
+@@ -133,7 +133,7 @@ TEST(RequestContext, deadlockTest) {
+ 
+     ~DeadlockTestData() override {
+       RequestContext::get()->setContextData(
+-          val_, std::make_unique<TestData>(1));
++          val_, folly::make_unique<TestData>(1));
+     }
+ 
+     void onSet() override {}
+@@ -144,6 +144,6 @@ TEST(RequestContext, deadlockTest) {
+   };
+ 
+   RequestContext::get()->setContextData(
+-      "test", std::make_unique<DeadlockTestData>("test2"));
++      "test", folly::make_unique<DeadlockTestData>("test2"));
+   RequestContext::get()->clearContextData("test");
+ }
+diff --git a/folly/io/async/test/SSLSessionTest.cpp b/folly/io/async/test/SSLSessionTest.cpp
+index a85f793..77ab567 100644
+--- a/folly/io/async/test/SSLSessionTest.cpp
++++ b/folly/io/async/test/SSLSessionTest.cpp
+@@ -138,7 +138,7 @@ TEST_F(SSLSessionTest, SerializeDeserializeTest) {
+     ASSERT_TRUE(client.handshakeSuccess_);
+ 
+     std::unique_ptr<SSLSession> sess =
+-        std::make_unique<SSLSession>(clientPtr->getSSLSession());
++        folly::make_unique<SSLSession>(clientPtr->getSSLSession());
+     sessiondata = sess->serialize();
+     ASSERT_TRUE(!sessiondata.empty());
+   }
+@@ -150,7 +150,7 @@ TEST_F(SSLSessionTest, SerializeDeserializeTest) {
+         new AsyncSSLSocket(clientCtx, &eventBase, fds[0], serverName));
+     auto clientPtr = clientSock.get();
+     std::unique_ptr<SSLSession> sess =
+-        std::make_unique<SSLSession>(sessiondata);
++        folly::make_unique<SSLSession>(sessiondata);
+     ASSERT_NE(sess.get(), nullptr);
+     clientSock->setSSLSession(sess->getRawSSLSessionDangerous(), true);
+     AsyncSSLSocket::UniquePtr serverSock(
+@@ -181,7 +181,7 @@ TEST_F(SSLSessionTest, GetSessionID) {
+   ASSERT_TRUE(client.handshakeSuccess_);
+ 
+   std::unique_ptr<SSLSession> sess =
+-      std::make_unique<SSLSession>(clientPtr->getSSLSession());
++      folly::make_unique<SSLSession>(clientPtr->getSSLSession());
+   ASSERT_NE(sess, nullptr);
+   auto sessID = sess->getSessionID();
+   ASSERT_GE(sessID.length(), 0);
+diff --git a/folly/io/async/test/ScopedBoundPort.cpp b/folly/io/async/test/ScopedBoundPort.cpp
+index e7aefb4..9db7e54 100644
+--- a/folly/io/async/test/ScopedBoundPort.cpp
++++ b/folly/io/async/test/ScopedBoundPort.cpp
+@@ -23,7 +23,7 @@
+ namespace folly {
+ 
+ ScopedBoundPort::ScopedBoundPort(IPAddress host) {
+-  ebth_ = std::make_unique<ScopedEventBaseThread>();
++  ebth_ = folly::make_unique<ScopedEventBaseThread>();
+   ebth_->getEventBase()->runInEventBaseThreadAndWait([&] {
+     sock_ = AsyncServerSocket::newSocket(ebth_->getEventBase());
+     sock_->bind(SocketAddress(host, 0));
+diff --git a/folly/io/test/CompressionTest.cpp b/folly/io/test/CompressionTest.cpp
+index 4c45648..285f900 100644
+--- a/folly/io/test/CompressionTest.cpp
++++ b/folly/io/test/CompressionTest.cpp
+@@ -922,7 +922,7 @@ namespace {
+ class CustomCodec : public Codec {
+  public:
+   static std::unique_ptr<Codec> create(std::string prefix, CodecType type) {
+-    return std::make_unique<CustomCodec>(std::move(prefix), type);
++    return folly::make_unique<CustomCodec>(std::move(prefix), type);
+   }
+   explicit CustomCodec(std::string prefix, CodecType type)
+       : Codec(CodecType::USER_DEFINED),
+diff --git a/folly/ssl/SSLSession.h b/folly/ssl/SSLSession.h
+index c08b8fb..04b5d96 100644
+--- a/folly/ssl/SSLSession.h
++++ b/folly/ssl/SSLSession.h
+@@ -28,11 +28,11 @@ class SSLSession {
+   // Holds and takes ownership of an SSL_SESSION object by incrementing refcount
+   explicit SSLSession(SSL_SESSION* session, bool takeOwnership = true)
+       : impl_(
+-            std::make_unique<detail::SSLSessionImpl>(session, takeOwnership)) {}
++            folly::make_unique<detail::SSLSessionImpl>(session, takeOwnership)) {}
+ 
+   // Deserialize from a string
+   explicit SSLSession(const std::string& serializedSession)
+-      : impl_(std::make_unique<detail::SSLSessionImpl>(serializedSession)) {}
++      : impl_(folly::make_unique<detail::SSLSessionImpl>(serializedSession)) {}
+ 
+   // Serialize to a string that is suitable to store in a persistent cache
+   std::string serialize() const {
+diff --git a/folly/test/AHMIntStressTest.cpp b/folly/test/AHMIntStressTest.cpp
+index e119cde..3542122 100644
+--- a/folly/test/AHMIntStressTest.cpp
++++ b/folly/test/AHMIntStressTest.cpp
+@@ -33,7 +33,7 @@ struct MyObject {
+ typedef folly::AtomicHashMap<int,std::shared_ptr<MyObject>> MyMap;
+ typedef std::lock_guard<std::mutex> Guard;
+ 
+-std::unique_ptr<MyMap> newMap() { return std::make_unique<MyMap>(100); }
++std::unique_ptr<MyMap> newMap() { return folly::make_unique<MyMap>(100); }
+ 
+ struct MyObjectDirectory {
+   MyObjectDirectory()
+diff --git a/folly/test/FunctionTest.cpp b/folly/test/FunctionTest.cpp
+index a739100..b8b98e6 100644
+--- a/folly/test/FunctionTest.cpp
++++ b/folly/test/FunctionTest.cpp
+@@ -313,7 +313,7 @@ TEST(Function, Bind) {
+ // NonCopyableLambda
+ 
+ TEST(Function, NonCopyableLambda) {
+-  auto unique_ptr_int = std::make_unique<int>(900);
++  auto unique_ptr_int = folly::make_unique<int>(900);
+   EXPECT_EQ(900, *unique_ptr_int);
+ 
+   struct {
+diff --git a/folly/test/MPMCQueueTest.cpp b/folly/test/MPMCQueueTest.cpp
+index f2467ed..02beaf8 100644
+--- a/folly/test/MPMCQueueTest.cpp
++++ b/folly/test/MPMCQueueTest.cpp
+@@ -149,7 +149,7 @@ TEST(MPMCQueue, lots_of_element_types) {
+   runElementTypeTest(std::make_pair(10, string("def")));
+   runElementTypeTest(vector<string>{{"abc"}});
+   runElementTypeTest(std::make_shared<char>('a'));
+-  runElementTypeTest(std::make_unique<char>('a'));
++  runElementTypeTest(folly::make_unique<char>('a'));
+   runElementTypeTest(boost::intrusive_ptr<RefCounted>(new RefCounted));
+   EXPECT_EQ(RefCounted::active_instances, 0);
+ }
+@@ -160,7 +160,7 @@ TEST(MPMCQueue, lots_of_element_types_dynamic) {
+   runElementTypeTest<true>(std::make_pair(10, string("def")));
+   runElementTypeTest<true>(vector<string>{{"abc"}});
+   runElementTypeTest<true>(std::make_shared<char>('a'));
+-  runElementTypeTest<true>(std::make_unique<char>('a'));
++  runElementTypeTest<true>(folly::make_unique<char>('a'));
+   runElementTypeTest<true>(boost::intrusive_ptr<RefCounted>(new RefCounted));
+   EXPECT_EQ(RefCounted::active_instances, 0);
+ }
+@@ -485,13 +485,13 @@ void runMtProdConsDeterministic(long seed) {
+   using QueueType = MPMCQueue<int, DeterministicAtomic, Dynamic>;
+ 
+   vector<unique_ptr<WriteMethodCaller<QueueType>>> callers;
+-  callers.emplace_back(std::make_unique<BlockingWriteCaller<QueueType>>());
+-  callers.emplace_back(std::make_unique<WriteIfNotFullCaller<QueueType>>());
+-  callers.emplace_back(std::make_unique<WriteCaller<QueueType>>());
++  callers.emplace_back(folly::make_unique<BlockingWriteCaller<QueueType>>());
++  callers.emplace_back(folly::make_unique<WriteIfNotFullCaller<QueueType>>());
++  callers.emplace_back(folly::make_unique<WriteCaller<QueueType>>());
+   callers.emplace_back(
+-      std::make_unique<TryWriteUntilCaller<QueueType>>(milliseconds(1)));
++      folly::make_unique<TryWriteUntilCaller<QueueType>>(milliseconds(1)));
+   callers.emplace_back(
+-      std::make_unique<TryWriteUntilCaller<QueueType>>(seconds(2)));
++      folly::make_unique<TryWriteUntilCaller<QueueType>>(seconds(2)));
+   size_t cap;
+ 
+   for (const auto& caller : callers) {
+@@ -563,13 +563,13 @@ void runMtProdConsDeterministicDynamic(
+   using QueueType = MPMCQueue<int, DeterministicAtomic, true>;
+ 
+   vector<unique_ptr<WriteMethodCaller<QueueType>>> callers;
+-  callers.emplace_back(std::make_unique<BlockingWriteCaller<QueueType>>());
+-  callers.emplace_back(std::make_unique<WriteIfNotFullCaller<QueueType>>());
+-  callers.emplace_back(std::make_unique<WriteCaller<QueueType>>());
++  callers.emplace_back(folly::make_unique<BlockingWriteCaller<QueueType>>());
++  callers.emplace_back(folly::make_unique<WriteIfNotFullCaller<QueueType>>());
++  callers.emplace_back(folly::make_unique<WriteCaller<QueueType>>());
+   callers.emplace_back(
+-      std::make_unique<TryWriteUntilCaller<QueueType>>(milliseconds(1)));
++      folly::make_unique<TryWriteUntilCaller<QueueType>>(milliseconds(1)));
+   callers.emplace_back(
+-      std::make_unique<TryWriteUntilCaller<QueueType>>(seconds(2)));
++      folly::make_unique<TryWriteUntilCaller<QueueType>>(seconds(2)));
+ 
+   for (const auto& caller : callers) {
+     LOG(INFO) <<
+@@ -630,13 +630,13 @@ void runMtProdCons() {
+   setFromEnv(n, "NUM_OPS");
+   vector<unique_ptr<WriteMethodCaller<QueueType>>>
+     callers;
+-  callers.emplace_back(std::make_unique<BlockingWriteCaller<QueueType>>());
+-  callers.emplace_back(std::make_unique<WriteIfNotFullCaller<QueueType>>());
+-  callers.emplace_back(std::make_unique<WriteCaller<QueueType>>());
++  callers.emplace_back(folly::make_unique<BlockingWriteCaller<QueueType>>());
++  callers.emplace_back(folly::make_unique<WriteIfNotFullCaller<QueueType>>());
++  callers.emplace_back(folly::make_unique<WriteCaller<QueueType>>());
+   callers.emplace_back(
+-      std::make_unique<TryWriteUntilCaller<QueueType>>(milliseconds(1)));
++      folly::make_unique<TryWriteUntilCaller<QueueType>>(milliseconds(1)));
+   callers.emplace_back(
+-      std::make_unique<TryWriteUntilCaller<QueueType>>(seconds(2)));
++      folly::make_unique<TryWriteUntilCaller<QueueType>>(seconds(2)));
+   for (const auto& caller : callers) {
+     LOG(INFO) << PC_BENCH((QueueType(10)), 1, 1, n, *caller);
+     LOG(INFO) << PC_BENCH((QueueType(10)), 10, 1, n, *caller);
+@@ -664,13 +664,13 @@ void runMtProdConsEmulatedFutex() {
+ 
+   int n = 100000;
+   vector<unique_ptr<WriteMethodCaller<QueueType>>> callers;
+-  callers.emplace_back(std::make_unique<BlockingWriteCaller<QueueType>>());
+-  callers.emplace_back(std::make_unique<WriteIfNotFullCaller<QueueType>>());
+-  callers.emplace_back(std::make_unique<WriteCaller<QueueType>>());
++  callers.emplace_back(folly::make_unique<BlockingWriteCaller<QueueType>>());
++  callers.emplace_back(folly::make_unique<WriteIfNotFullCaller<QueueType>>());
++  callers.emplace_back(folly::make_unique<WriteCaller<QueueType>>());
+   callers.emplace_back(
+-      std::make_unique<TryWriteUntilCaller<QueueType>>(milliseconds(1)));
++      folly::make_unique<TryWriteUntilCaller<QueueType>>(milliseconds(1)));
+   callers.emplace_back(
+-      std::make_unique<TryWriteUntilCaller<QueueType>>(seconds(2)));
++      folly::make_unique<TryWriteUntilCaller<QueueType>>(seconds(2)));
+   for (const auto& caller : callers) {
+     LOG(INFO) << PC_BENCH((QueueType(10)), 1, 1, n, *caller);
+     LOG(INFO) << PC_BENCH((QueueType(10)), 10, 1, n, *caller);
+diff --git a/folly/test/PartialTest.cpp b/folly/test/PartialTest.cpp
+index aecd26d..7f927a2 100644
+--- a/folly/test/PartialTest.cpp
++++ b/folly/test/PartialTest.cpp
+@@ -113,8 +113,8 @@ std::unique_ptr<int> calc_uptr(std::unique_ptr<int> x, std::unique_ptr<int> y) {
+ }
+ 
+ TEST(Partial, MoveOnly) {
+-  auto five = std::make_unique<int>(5);
+-  auto six = std::make_unique<int>(6);
++  auto five = folly::make_unique<int>(5);
++  auto six = folly::make_unique<int>(6);
+ 
+   // create a partial object which holds a pointer to the `calc_uptr` function
+   // and a `unique_ptr<int>` for the first argument
+diff --git a/folly/test/SingletonTest.cpp b/folly/test/SingletonTest.cpp
+index be95ea4..cd83e13 100644
+--- a/folly/test/SingletonTest.cpp
++++ b/folly/test/SingletonTest.cpp
+@@ -205,7 +205,7 @@ TEST(Singleton, SharedPtrUsage) {
+   std::vector<std::unique_ptr<Watchdog>> watchdog_instances;
+   SingletonSharedPtrUsage<Watchdog> watchdog_singleton(
+       [&] {
+-        watchdog_instances.push_back(std::make_unique<Watchdog>());
++        watchdog_instances.push_back(folly::make_unique<Watchdog>());
+         return watchdog_instances.back().get();
+       },
+       [&](Watchdog* ptr) {
+diff --git a/folly/test/ThreadLocalTest.cpp b/folly/test/ThreadLocalTest.cpp
+index 62526eb..8353c3b 100644
+--- a/folly/test/ThreadLocalTest.cpp
++++ b/folly/test/ThreadLocalTest.cpp
+@@ -103,7 +103,7 @@ TEST(ThreadLocalPtr, DefaultDeleterOwnershipTransfer) {
+   Widget::totalVal_ = 0;
+   {
+     ThreadLocalPtr<Widget> w;
+-    auto source = std::make_unique<Widget>();
++    auto source = folly::make_unique<Widget>();
+     std::thread([&w, &source]() {
+       w.reset(std::move(source));
+       w.get()->val_ += 10;
+diff --git a/folly/test/TryTest.cpp b/folly/test/TryTest.cpp
+index c986f40..932b7e9 100644
+--- a/folly/test/TryTest.cpp
++++ b/folly/test/TryTest.cpp
+@@ -55,7 +55,7 @@ TEST(Try, moveOnly) {
+ 
+ TEST(Try, makeTryWith) {
+   auto func = []() {
+-    return std::make_unique<int>(1);
++    return folly::make_unique<int>(1);
+   };
+ 
+   auto result = makeTryWith(func);
+diff --git a/folly/test/sorted_vector_test.cpp b/folly/test/sorted_vector_test.cpp
+index 257b5df..54c403e 100644
+--- a/folly/test/sorted_vector_test.cpp
++++ b/folly/test/sorted_vector_test.cpp
+@@ -511,13 +511,13 @@ TEST(SortedVectorTypes, TestSetBulkInsertionEmptyRange) {
+ // extensively above.
+ TEST(SortedVectorTypes, TestBulkInsertionUncopyableTypes) {
+   std::vector<std::pair<int, std::unique_ptr<int>>> s;
+-  s.emplace_back(1, std::make_unique<int>(0));
++  s.emplace_back(1, folly::make_unique<int>(0));
+ 
+   sorted_vector_map<int, std::unique_ptr<int>> vmap(
+       std::make_move_iterator(s.begin()), std::make_move_iterator(s.end()));
+ 
+   s.clear();
+-  s.emplace_back(3, std::make_unique<int>(0));
++  s.emplace_back(3, folly::make_unique<int>(0));
+   vmap.insert(
+       std::make_move_iterator(s.begin()), std::make_move_iterator(s.end()));
+ }
+-- 
+2.7.4
+
