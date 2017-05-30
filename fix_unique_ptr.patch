@@ -1,0 +1,25 @@
+From 390c5e2b1036e64a4370c7f3955cfff29a8fd1a9 Mon Sep 17 00:00:00 2001
+From: Colin Shea <colin.shea@bia-boeing.com>
+Date: Mon, 29 May 2017 21:57:44 -0400
+Subject: [PATCH] changed unique_ptr to folly::unique_ptr
+
+---
+ src/util/GlobalAsyncCopier.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/util/GlobalAsyncCopier.cpp b/src/util/GlobalAsyncCopier.cpp
+index d1cc8ca..d1c56c3 100644
+--- a/src/util/GlobalAsyncCopier.cpp
++++ b/src/util/GlobalAsyncCopier.cpp
+@@ -23,7 +23,7 @@ std::unique_ptr<AsyncCopier> makeGlobalCopier() {
+     bufferSize = folly::to<size_t>(ptr);
+   }
+ 
+-  return std::make_unique<AsyncCopier>(bufferSize << 20);
++  return folly::make_unique<AsyncCopier>(bufferSize << 20);
+ }
+ 
+ extern "C" void fbCudaAsyncMemcpyHtoD(void* dest,
+-- 
+2.7.4
+
