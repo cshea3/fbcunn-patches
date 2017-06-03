@@ -1,0 +1,41 @@
+From 561b8e13da79ad7d9a1f8128430dbde53484f584 Mon Sep 17 00:00:00 2001
+From: Colin Shea <colin.shea@bia-boeing.com>
+Date: Sat, 3 Jun 2017 16:09:04 -0400
+Subject: [PATCH] asdf
+
+---
+ thpp/build.sh | 18 +++++++++++-------
+ 1 file changed, 11 insertions(+), 7 deletions(-)
+
+diff --git a/thpp/build.sh b/thpp/build.sh
+index 838560c..9ff7809 100755
+--- a/thpp/build.sh
++++ b/thpp/build.sh
+@@ -16,13 +16,17 @@ if [[ ! -r ./Tensor.h ]]; then
+ fi
+ 
+ rm -rf gtest-1.7.0 gtest-1.7.0.zip
+-curl -JLO https://googletest.googlecode.com/files/gtest-1.7.0.zip
+-if [[ $(sha1sum -b gtest-1.7.0.zip | cut -d' ' -f1) != \
+-      'f85f6d2481e2c6c4a18539e391aa4ea8ab0394af' ]]; then
+-  echo "Invalid gtest-1.7.0.zip file" >&2
+-  exit 1
+-fi
+-unzip gtest-1.7.0.zip
++git clone https://github.com/google/googletest.git 
++cd googletest
++git checkout tags/release-1.7.0
++
++#curl -JLO https://googletest.googlecode.com/files/gtest-1.7.0.zip
++#if [[ $(sha1sum -b gtest-1.7.0.zip | cut -d' ' -f1) != \
++#      'f85f6d2481e2c6c4a18539e391aa4ea8ab0394af' ]]; then
++#  echo "Invalid gtest-1.7.0.zip file" >&2
++#  exit 1
++#fi
++#unzip gtest-1.7.0.zip
+ 
+ # Build in a separate directory
+ mkdir -p build
+-- 
+2.7.4
+
