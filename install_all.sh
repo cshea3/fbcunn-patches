@@ -101,8 +101,8 @@ fi
 echo
 echo Building folly
 echo
-#cd $dir
-#git clone https://github.com/cshea3/fbcunn-patches
+cd $dir
+git clone https://github.com/cshea3/fbcunn-patches
 #cp fbcunn-patches/std_to_folly_.patch folly
 #cd folly
 #git apply std_to_folly_.patch
@@ -144,7 +144,10 @@ echo
 echo 'Installing TH++'
 echo
 
-cd $dir/thpp/thpp
+cd $dir/thpp
+cp $dir/fbcunn-patches/thpp_googletest.patch .
+git apply thpp_googletest.patch
+cd thpp
 ./build.sh
 
 echo
