@@ -145,8 +145,8 @@ echo 'Installing TH++'
 echo
 
 cd $dir/thpp
-cp $dir/fbcunn-patches/thpp_googletest.patch .
-git apply thpp_googletest.patch
+cp $dir/fbcunn-patches/thpp-googletest.patch .
+git apply thpp-googletest.patch
 cd thpp
 ./build.sh
 
