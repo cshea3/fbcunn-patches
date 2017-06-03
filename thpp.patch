@@ -1,0 +1,81 @@
+From 399a553e1f68b5a78b60654f6da5dff784eaffc1 Mon Sep 17 00:00:00 2001
+From: Colin Shea <colin.shea@bia-boeing.com>
+Date: Sat, 3 Jun 2017 17:13:13 -0400
+Subject: [PATCH 1/2] fixed googletest issue
+
+---
+ thpp/build.sh | 18 ++++++++++--------
+ 1 file changed, 10 insertions(+), 8 deletions(-)
+
+diff --git a/thpp/build.sh b/thpp/build.sh
+index 838560c..28d7663 100755
+--- a/thpp/build.sh
++++ b/thpp/build.sh
+@@ -16,14 +16,16 @@ if [[ ! -r ./Tensor.h ]]; then
+ fi
+ 
+ rm -rf gtest-1.7.0 gtest-1.7.0.zip
+-curl -JLO https://googletest.googlecode.com/files/gtest-1.7.0.zip
+-if [[ $(sha1sum -b gtest-1.7.0.zip | cut -d' ' -f1) != \
+-      'f85f6d2481e2c6c4a18539e391aa4ea8ab0394af' ]]; then
+-  echo "Invalid gtest-1.7.0.zip file" >&2
+-  exit 1
+-fi
+-unzip gtest-1.7.0.zip
+-
++#curl -JLO https://googletest.googlecode.com/files/gtest-1.7.0.zip
++curl -JLO https://github.com/google/googletest/archive/release-1.8.0.tar.gz
++#if [[ $(sha1sum -b gtest-1.7.0.zip | cut -d' ' -f1) != \
++#      'f85f6d2481e2c6c4a18539e391aa4ea8ab0394af' ]]; then
++#  echo "Invalid gtest-1.7.0.zip file" >&2
++#  exit 1
++#fi
++#unzip gtest-1.7.0.zip
++tar -xvf googletest-release-1.8.0.tar.gz
++mv googletest-release-1.8.0 gtest-1.7.0
+ # Build in a separate directory
+ mkdir -p build
+ cd build
+-- 
+2.7.4
+
+
+From 3aa934daaa07441c8c74c97c57726a46e031eb48 Mon Sep 17 00:00:00 2001
+From: Colin Shea <colin.shea@bia-boeing.com>
+Date: Sat, 3 Jun 2017 19:17:16 -0400
+Subject: [PATCH 2/2] Applying patch from
+ https://github.com/facebook/thpp/pull/42/files
+
+---
+ thpp/detail/TensorGeneric.h | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/thpp/detail/TensorGeneric.h b/thpp/detail/TensorGeneric.h
+index 144d23d..a7ebb10 100644
+--- a/thpp/detail/TensorGeneric.h
++++ b/thpp/detail/TensorGeneric.h
+@@ -188,17 +188,17 @@ template <> struct TensorOps<real> {
+   }
+   static void _max(THTensor* values, THLongTensor* indices,
+                    THTensor* t, int dim) {
+-    return THTensor_(max)(values, indices, t, dim);
++    return THTensor_(max)(values, indices, t, dim, 1);
+   }
+   static void _min(THTensor* values, THLongTensor* indices,
+                    THTensor* t, int dim) {
+-    return THTensor_(min)(values, indices, t, dim);
++    return THTensor_(min)(values, indices, t, dim, 1);
+   }
+   static void _sum(THTensor* r, THTensor* t, int dim) {
+-    return THTensor_(sum)(r, t, dim);
++    return THTensor_(sum)(r, t, dim, 1);
+   }
+   static void _prod(THTensor* r, THTensor* t, int dim) {
+-    return THTensor_(prod)(r, t, dim);
++    return THTensor_(prod)(r, t, dim, 1);
+   }
+   static void _cumsum(THTensor* r, THTensor* t, int dim) {
+     return THTensor_(cumsum)(r, t, dim);
+-- 
+2.7.4
+
