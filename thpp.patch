@@ -1,7 +1,7 @@
 From 399a553e1f68b5a78b60654f6da5dff784eaffc1 Mon Sep 17 00:00:00 2001
 From: Colin Shea <colin.shea@bia-boeing.com>
 Date: Sat, 3 Jun 2017 17:13:13 -0400
-Subject: [PATCH 1/4] fixed googletest issue
+Subject: [PATCH 1/5] fixed googletest issue
 
 ---
  thpp/build.sh | 18 ++++++++++--------
@@ -43,7 +43,7 @@ index 838560c..28d7663 100755
 From 3aa934daaa07441c8c74c97c57726a46e031eb48 Mon Sep 17 00:00:00 2001
 From: Colin Shea <colin.shea@bia-boeing.com>
 Date: Sat, 3 Jun 2017 19:17:16 -0400
-Subject: [PATCH 2/4] Applying patch from
+Subject: [PATCH 2/5] Applying patch from
  https://github.com/facebook/thpp/pull/42/files
 
 ---
@@ -83,7 +83,7 @@ index 144d23d..a7ebb10 100644
 From 57d9bd3bc549da6fe68bb70ed528d262beb4a5b4 Mon Sep 17 00:00:00 2001
 From: Colin Shea <colin.shea@bia-boeing.com>
 Date: Sat, 3 Jun 2017 20:28:10 -0400
-Subject: [PATCH 3/4] final correction to TensorGeneric to keep up with nn
+Subject: [PATCH 3/5] final correction to TensorGeneric to keep up with nn
  change commit 75fa86b20ac188fd794a7a38cb75921b97ac5fc9
 
 ---
@@ -112,7 +112,7 @@ index a7ebb10..dddde81 100644
 From 7ada17d172bf66afbcf7788510abdc1aac6887e3 Mon Sep 17 00:00:00 2001
 From: Colin Shea <colin.shea@bia-boeing.com>
 Date: Sat, 3 Jun 2017 21:14:16 -0400
-Subject: [PATCH 4/4] try two?
+Subject: [PATCH 4/5] try two?
 
 ---
  thpp/detail/TensorGeneric.h | 2 +-
@@ -131,6 +131,38 @@ index dddde81..c9bfc1f 100644
      return THTensor_(sum)(r, t, dim, expand);
    }
    static void _prod(THTensor* r, THTensor* t, int dim) {
+-- 
+2.7.4
+
+
+From 46cb2444a88557a60fd6b72d19e3cc8874fa538f Mon Sep 17 00:00:00 2001
+From: Colin Shea <colin.shea@bia-boeing.com>
+Date: Sat, 3 Jun 2017 22:15:15 -0400
+Subject: [PATCH 5/5] add a second method
+
+---
+ thpp/detail/TensorGeneric.h | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/thpp/detail/TensorGeneric.h b/thpp/detail/TensorGeneric.h
+index c9bfc1f..994c3f2 100644
+--- a/thpp/detail/TensorGeneric.h
++++ b/thpp/detail/TensorGeneric.h
+@@ -194,9 +194,13 @@ template <> struct TensorOps<real> {
+                    THTensor* t, int dim) {
+     return THTensor_(min)(values, indices, t, dim, 1);
+   }
+-  static void _sum(THTensor* r, THTensor* t, int dim, int expand=0) {
++  static void _sum(THTensor* r, THTensor* t, int dim, int expand) {
+     return THTensor_(sum)(r, t, dim, expand);
+   }
++  static void _sum(THTensor* r, THTensor* t, int dim){
++    return THTensor_(sum)(r,t,dim,1);
++  }
++
+   static void _prod(THTensor* r, THTensor* t, int dim) {
+     return THTensor_(prod)(r, t, dim, 1);
+   }
 -- 
 2.7.4
 
